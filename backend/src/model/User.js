@@ -79,6 +79,9 @@ const UserSchema = new mongoose.Schema(
         message: "Password must contain at least one letter and one number",
       },
     },
+    refreshToken: {
+      type: String
+    },
   },
   { timestamps: true }
 );

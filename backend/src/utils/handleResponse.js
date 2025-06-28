@@ -5,7 +5,7 @@ const handleResponse = async (req, res, fn) => {
       success: true,
       status: result?.status || 200,
       message: result?.message || "Success",
-      data: result?.data || result,
+      data: result?.data || [],
     });
   } catch (error) {
     return res.status(error?.status || 500).json({

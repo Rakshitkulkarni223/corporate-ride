@@ -26,18 +26,29 @@ const loginUserService = async ({ mobileNumber, password }) => {
         };
     }
 
-    const token = jwt.sign(
-        { id: user._id, mobileNumber: user.mobileNumber },
+    const accessToken = jwt.sign(
+        { id: user._id },
         process.env.JWT_SECRET,
         { expiresIn: "1h" }
     );
 
+    const refreshToken = jwt.sign(
+        { id: user._id },
+        process.env.REFRESH_SECRET,
+        { expiresIn: "7d" }
+    );
+
+    // update refresh token
+    user.refreshToken = refreshToken;
+    await user.save();
+
     return {
         status: 200,
         message: "Login successful",
+        refreshToken,
         data: {
-            token,
             userId: user._id,
+            token: accessToken,
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,
