@@ -1,5 +1,6 @@
 const { getBucket } = require("../database");
 const User = require("../model/User");
+const checkUserAccess = require("../utils/checkAccess");
 const { postImageUpload } = require("../utils/handleImageUpload");
 
 const saveUserDetails = async (userObj) => {
@@ -84,4 +85,43 @@ const updateUserDetails = async ({ userId, files, body }) => {
   }
 };
 
-module.exports = { saveUserDetails, updateUserDetails };
+
+const getUserDetails = async (userId, loggedInUserId) => {
+  checkUserAccess(userId, loggedInUserId);
+
+  const user = await User.findById(userId).select("-password -refreshToken");
+  if (!user) {
+    throw {
+      status: 404,
+      message: "User not found.",
+    };
+  }
+
+  return {
+    status: 200,
+    message: "User fetched successfully",
+    data: user,
+  };
+
+}
+
+const getUserProfileDetails = async (userId, loggedInUserId) => {
+  checkUserAccess(userId, loggedInUserId);
+
+  const user = await User.findById(userId).select("profile");
+  if (!user) {
+    throw {
+      status: 404,
+      message: "User not found",
+    };
+  }
+
+  return {
+    status: 200,
+    message: "Profile fetched successfully",
+    data: user.profile,
+  };
+
+}
+
+module.exports = { saveUserDetails, updateUserDetails, getUserDetails, getUserProfileDetails };

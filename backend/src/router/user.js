@@ -19,5 +19,6 @@ userRouter.put(
 );
 
 userRouter.get("/:id",authenticateUser,userController.getUserById);
+userRouter.get("/profile/:id",authenticateUser,userController.getUserProfileById);
 
 module.exports = userRouter;

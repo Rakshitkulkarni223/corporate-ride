@@ -1,5 +1,6 @@
 const User = require("../model/User");
-const { saveUserDetails, updateUserDetails } = require("../service/user.service");
+const { saveUserDetails, updateUserDetails, getUserDetails, getUserProfileDetails } = require("../service/user.service");
+const checkUserAccess = require("../utils/checkAccess");
 const handleResponse = require("../utils/handleResponse");
 
 const registerUser = async (req, res) => {
@@ -14,6 +15,8 @@ const updateUserProfile = async (req, res) => {
     await handleResponse(req, res, async () => {
         const { body, files } = req;
         const userId = params.id;
+        const loggedInUserId = req.userId;
+        checkUserAccess(userId, loggedInUserId);
 
         if (!userId) {
             throw {
@@ -27,27 +30,25 @@ const updateUserProfile = async (req, res) => {
 };
 
 const getUserById = async (req, res) => {
+    await handleResponse(req, res, async () => {
+        const userId = req.params.id;
+        const loggedInUserId = req.userId;
+        return await getUserDetails(userId, loggedInUserId);
+    });
+};
+
+
+const getUserProfileById = async (req, res) => {
   await handleResponse(req, res, async () => {
     const userId = req.params.id;
-
-    const user = await User.findById(userId).select("-password -refreshToken");
-    if (!user) {
-      throw {
-        status: 404,
-        message: "User not found.",
-      };
-    }
-
-    return {
-      status: 200,
-      message: "User fetched successfully",
-      data: user,
-    };
+    const loggedInUserId = req.userId;
+    return await getUserProfileDetails(userId, loggedInUserId);
   });
 };
 
 module.exports = {
     registerUser,
     updateUserProfile,
-    getUserById
+    getUserById,
+    getUserProfileById
 };
