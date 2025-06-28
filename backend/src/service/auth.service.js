@@ -1,5 +1,6 @@
 const User = require("../model/User");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const loginUserService = async ({ mobileNumber, password }) => {
     if (!mobileNumber || !password) {
@@ -25,10 +26,17 @@ const loginUserService = async ({ mobileNumber, password }) => {
         };
     }
 
+    const token = jwt.sign(
+        { id: user._id, mobileNumber: user.mobileNumber },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+    );
+
     return {
         status: 200,
         message: "Login successful",
         data: {
+            token,
             userId: user._id,
             firstName: user.firstName,
             lastName: user.lastName,
