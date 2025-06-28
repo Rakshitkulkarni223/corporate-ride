@@ -6,7 +6,7 @@ const loginUserService = async ({ mobileNumber, password }) => {
     if (!mobileNumber || !password) {
         throw {
             status: 400,
-            message: "Mobile Number and password are required",
+            message: "Mobile number and password are required",
         };
     }
 
@@ -14,7 +14,7 @@ const loginUserService = async ({ mobileNumber, password }) => {
     if (!user) {
         throw {
             status: 401,
-            message: "Invalid mobile number or password",
+            message: "User with this mobile number does not exist.",
         };
     }
 
@@ -22,7 +22,7 @@ const loginUserService = async ({ mobileNumber, password }) => {
     if (!isMatch) {
         throw {
             status: 401,
-            message: "Invalid mobile number or password",
+            message: "Incorrect password. Please try again.",
         };
     }
 

@@ -5,13 +5,16 @@ const authenticateUser = require("../middleware/authMiddleware");
 
 const userRouter = express.Router();
 
-userRouter.post("/save", authenticateUser,
+userRouter.post("/save",userController.registerUser);
+userRouter.put(
+  "/update-profile/:id",
+  authenticateUser,
   upload.fields([
     { name: "officeIdCardUrl", maxCount: 1 },
     { name: "personalIdCardUrl", maxCount: 1 },
     { name: "avatar", maxCount: 1 },
   ]),
-  userController.registerUser
+  userController.updateUserProfile
 );
 
 module.exports = userRouter;
