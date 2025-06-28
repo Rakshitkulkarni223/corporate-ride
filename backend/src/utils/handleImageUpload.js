@@ -1,25 +1,44 @@
-const multer = require("multer");
-const path = require("path");
-const { UPLOADS_FOLDER } = require("../helpers/constants");
+const { Readable } = require("stream");
+const { getBucket } = require("../database");
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOADS_FOLDER),
-  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
-});
+const postImageUpload = async (files, fields, mobileNumber) => {
+    let bucket = getBucket()
+    const uploadedFiles = {};
+    const uploadedFileIds = [];
 
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
-  if (!allowedTypes.includes(file.mimetype)) {
-    return cb(new Error("Invalid file type. Only JPG, PNG, and PDF are allowed."));
-  }
-  cb(null, true);
-};
+    for (const field of fields) {
+        const file = files[field]?.[0];
+        if (!file) continue;
 
-const upload = multer({
-  storage,
-  fileFilter,
-});
+        const stream = Readable.from(file.buffer);
+        const ext = file.originalname.split(".").pop();
+        const filename = `${mobileNumber}-${field}.${ext}`;
+
+        const uploadStream = bucket.openUploadStream(filename, {
+            metadata: {
+                fieldName: field,
+                uploadedBy: mobileNumber,
+            },
+            contentType: file.mimetype,
+        });
+
+        const fileId = uploadStream.id;
+
+        await new Promise((resolve, reject) => {
+            stream.pipe(uploadStream)
+                .on("error", reject)
+                .on("finish", resolve);
+        });
+
+        uploadedFiles[field] = fileId;
+        uploadedFileIds.push(fileId);
+    }
+    return {
+        uploadedFiles,
+        uploadedFileIds
+    }
+}
 
 module.exports = {
-    upload
-} 
+    postImageUpload
+}
