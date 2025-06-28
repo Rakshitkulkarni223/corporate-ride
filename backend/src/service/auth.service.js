@@ -13,7 +13,7 @@ const loginUserService = async ({ mobileNumber, password }) => {
     const user = await User.findOne({ mobileNumber });
     if (!user) {
         throw {
-            status: 401,
+            status: 404,
             message: "User with this mobile number does not exist.",
         };
     }
