@@ -39,9 +39,9 @@ const loginUserService = async ({ mobileNumber, password }) => {
         message: "Login successful",
         refreshTokenObj,
         data: {
-            userId: user._id,
             token: accessTokenObj.token,
             expires: accessTokenObj.expires,
+            userId: user._id,
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,

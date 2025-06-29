@@ -1,4 +1,4 @@
-const { REFRESH_TOKEN_EXPIRES, ACCESS_TOKEN_EXPIRES } = require("../helpers/constants");
+const jwt = require('jsonwebtoken');
 const User = require("../model/User");
 const { loginUserService } = require("../service/auth.service");
 const handleResponse = require("../utils/handleResponse");
@@ -12,6 +12,7 @@ const loginUser = async (req, res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "Strict",
+            signed: true,
             expires: response.refreshTokenObj.expires
         });
         return response;
@@ -20,8 +21,9 @@ const loginUser = async (req, res) => {
 
 const refreshToken = async (req, res) => {
     await handleResponse(req, res, async () => {
+        const { signedCookies = {} } = req;
 
-        let token = req.cookies.refreshToken;
+        const { token } = signedCookies;
         if (!token) throw { status: 401, message: "Refresh token missing" };
 
         const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
@@ -31,12 +33,17 @@ const refreshToken = async (req, res) => {
             throw { status: 401, message: "Invalid refresh token" };
         }
 
-        const tokenObj = await generateJWT( user,  process.env.ACCESS_TOKEN_SECRET, "ACCESS")
+        const tokenObj = await generateJWT(user, process.env.ACCESS_TOKEN_SECRET, "ACCESS")
 
         return {
             status: 200,
             message: "Token refreshed",
             data: {
+                userId: user._id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                mobileNumber: user.mobileNumber,
                 token: tokenObj.token,
                 expires: tokenObj.expires
             }
@@ -45,7 +52,7 @@ const refreshToken = async (req, res) => {
 };
 
 
-const logout =  async (req, res) => {
+const logout = async (req, res) => {
     await handleResponse(req, res, async () => {
         res.clearCookie("token");
         return {

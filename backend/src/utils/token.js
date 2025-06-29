@@ -6,35 +6,35 @@ const generateJWT = async (user, secret, type) => {
     let expires;
 
     if (type === "ACCESS") {
-        expires = moment().add(ACCESS_TOKEN_EXPIRES);
-    } else if (type === 'REFRESH') {
-        expires = moment().add(REFRESH_TOKEN_EXPIRES);
+        expires = moment().add(ACCESS_TOKEN_EXPIRES, "minutes");
+    } else if (type === "REFRESH") {
+        expires = moment().add(REFRESH_TOKEN_EXPIRES, "days");
     }
 
     const payload = {
         id: user.id,
         iat: moment().unix(),
         exp: expires.unix(),
-        type
-    }
+        type,
+    };
 
     const token = await jwt.sign(payload, secret);
 
     return {
         token,
         expires: expires.toDate()
-    }
-}
+    };
+};
 
 const clearTokens = async (req, res) => {
-    try{
+    try {
         res.clearCookie('refreshToken', {
             httpOnly: true,
             secure: false,
             signed: true,
         });
         return true;
-    }catch(err){
+    } catch (err) {
         console.log(err);
     }
 }

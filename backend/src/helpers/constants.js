@@ -6,8 +6,8 @@ const GENDER = Object.freeze({
 
 const UPLOADS_FOLDER = 'uploads';
 
-const REFRESH_TOKEN_EXPIRES = process.env.REFRESH_TOKEN_EXPIRES
-const ACCESS_TOKEN_EXPIRES = process.env.ACCESS_TOKEN_EXPIRES
+const REFRESH_TOKEN_EXPIRES = parseInt(process.env.REFRESH_TOKEN_EXPIRES)
+const ACCESS_TOKEN_EXPIRES = parseInt(process.env.ACCESS_TOKEN_EXPIRES)
 
 module.exports = {
   GENDER,
