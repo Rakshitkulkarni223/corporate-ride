@@ -7,13 +7,16 @@ const authRouter = require("./src/router/auth");
 const app = express();
 require("dotenv").config();
 
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true
+}));
 app.use(express.json());
 
 connectDB();
 
 app.use("/api/user", userRouter);
-app.use("/api", authRouter);
+app.use("/api/auth", authRouter);
 
 app.get("/", (req, res) => {
   res.json({

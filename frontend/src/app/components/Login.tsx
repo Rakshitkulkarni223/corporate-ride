@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Head from "next/head";
+import axiosInstance from "../utils/axiosInstance";
 
 export default function LoginPage() {
   const [form, setForm] = useState({
@@ -13,9 +14,20 @@ export default function LoginPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login submitted:", form);
+    try {
+      const response = await axiosInstance.post("/api/auth/login", form);
+      console.log(response)
+    } catch (err: any) {
+      if (err.response) {
+        console.log("Error response:", err.response.data);
+        alert(err.response.data.message || "Something went wrong");
+      } else {
+        console.log("Network or other error:", err.message);
+        alert("Network error or server not reachable");
+      }
+    }
   };
 
   return (
