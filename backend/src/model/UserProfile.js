@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { Gender } = require("../helpers/constants");
+const { GENDER } = require("../helpers/constants");
 
 const UserProfileSchema = new mongoose.Schema(
   {
@@ -10,7 +10,7 @@ const UserProfileSchema = new mongoose.Schema(
     },
     gender: {
       type: String,
-      enum: Object.values(Gender),
+      enum: Object.values(GENDER),
     },
     homeAddress: { type: String },
     officeAddress: { type: String },

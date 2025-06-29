@@ -5,7 +5,7 @@ const authenticateUser = require("../middleware/authMiddleware");
 
 const userRouter = express.Router();
 
-userRouter.post("/save",userController.registerUser);
+userRouter.post("/register",userController.registerUser);
 
 userRouter.put(
   "/update/:id",

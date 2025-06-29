@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Head from "next/head";
 import axiosInstance from "../utils/axiosInstance";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [form, setForm] = useState({
@@ -19,6 +20,7 @@ export default function LoginPage() {
     try {
       const response = await axiosInstance.post("/api/auth/login", form);
       console.log(response);
+      alert(response.data.message)
     } catch (err: any) {
       if (err.response) {
         console.log("Error response:", err.response.data);
@@ -76,17 +78,17 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="w-full bg-blue-900 hover:bg-blue-850 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 mt-2 cursor-pointer"
+            className="w-full bg-blue-900 hover:bg-blue-950 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 mt-2 cursor-pointer"
           >
             Login
           </button>
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-4">
-          Don’t have an account?{" "}
-          <a href="/register" className="text-blue-900 hover:underline">
+          Don't have an account?{" "}
+          <Link href="/register" className="text-blue-900 hover:underline">
             Register
-          </a>
+          </Link>
         </p>
       </div>
     </>

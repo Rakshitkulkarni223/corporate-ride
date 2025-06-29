@@ -20,10 +20,13 @@ const saveUserDetails = async (userObj) => {
 
   await newUser.save();
 
+  const userWithoutPassword = newUser.toObject();
+  delete userWithoutPassword.password;
+
   return {
     status: 201,
     message: "User registered successfully!",
-    data: newUser,
+    data: userWithoutPassword,
   };
 };
 

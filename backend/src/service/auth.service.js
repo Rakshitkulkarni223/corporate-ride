@@ -1,6 +1,6 @@
 const User = require("../model/User");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+const { generateJWT } = require("../utils/token");
 
 const loginUserService = async ({ mobileNumber, password }) => {
     if (!mobileNumber || !password) {
@@ -26,29 +26,22 @@ const loginUserService = async ({ mobileNumber, password }) => {
         };
     }
 
-    const accessToken = jwt.sign(
-        { id: user._id },
-        process.env.JWT_SECRET,
-        { expiresIn: "1h" }
-    );
+    const accessTokenObj = await generateJWT(user, process.env.ACCESS_TOKEN_SECRET, "ACCESS")
 
-    const refreshToken = jwt.sign(
-        { id: user._id },
-        process.env.REFRESH_SECRET,
-        { expiresIn: "7d" }
-    );
+    const refreshTokenObj = await generateJWT(user, process.env.REFRESH_TOKEN_SECRET, "REFRESH")
 
     // update refresh token
-    user.refreshToken = refreshToken;
+    user.refreshToken = refreshTokenObj.token;
     await user.save();
 
     return {
         status: 200,
         message: "Login successful",
-        refreshToken,
+        refreshTokenObj,
         data: {
             userId: user._id,
-            token: accessToken,
+            token: accessTokenObj.token,
+            expires: accessTokenObj.expires,
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,
