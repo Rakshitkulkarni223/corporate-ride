@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import axiosInstance from "../utils/axiosInstance";
-import VehicleModal from "../utils/VehicleModal";
+import VehicleModal from "../Modals/VehicleModal";
 import { RiPencilLine } from "react-icons/ri";
 
 export default function ProfilePage() {

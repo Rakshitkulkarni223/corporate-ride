@@ -10,10 +10,10 @@ interface RideOffer {
     dropLocation: string;
     rideDateTime: string;
     availableSeats: number;
-    car: {
+    vehicle: {
         model: string;
         registrationNumber: string;
-        image?: string;
+        image: string;
     };
     owner: {
         firstName: string;
@@ -22,118 +22,16 @@ interface RideOffer {
 }
 
 export default function RideOffersPage() {
-    const { user } = useAuth();
+    const { user, token, isAuthenticated } = useAuth();
     const [rides, setRides] = useState<RideOffer[]>([]);
     const [loading, setLoading] = useState(true);
     const [requesting, setRequesting] = useState<string | null>(null);
 
-    // useEffect(() => {
-    //     const dummyRides: RideOffer[] = [
-    //         {
-    //             _id: "1",
-    //             pickupLocation: "Nayakaman",
-    //             dropLocation: "Gachibowli ORR",
-    //             rideDateTime: new Date(Date.now() + 3600000).toISOString(),
-    //             availableSeats: 3,
-    //             car: {
-    //                 model: "Hyundai i20",
-    //                 registrationNumber: "MH12AB1234",
-    //                 image: "https://images.pexels.com/photos/358070/pexels-photo-358070.jpeg?auto=compress&cs=tinysrgb&h=200",
-    //             },
-    //             owner: {
-    //                 firstName: "Rahul",
-    //                 lastName: "Sharma",
-    //             },
-    //         },
-    //         {
-    //             _id: "2",
-    //             pickupLocation: "Nayakaman",
-    //             dropLocation: "Kokapet Exit",
-    //             rideDateTime: new Date(Date.now() + 7200000).toISOString(),
-    //             availableSeats: 2,
-    //             car: {
-    //                 model: "Honda City",
-    //                 registrationNumber: "MH14CD5678",
-    //                 image: "https://images.pexels.com/photos/1149831/pexels-photo-1149831.jpeg?auto=compress&cs=tinysrgb&h=200",
-    //             },
-    //             owner: {
-    //                 firstName: "Rakshit",
-    //                 lastName: "Kulkarni",
-    //             },
-    //         },
-    //            {
-    //             _id: "2",
-    //             pickupLocation: "Nayakaman",
-    //             dropLocation: "Kokapet Exit",
-    //             rideDateTime: new Date(Date.now() + 7200000).toISOString(),
-    //             availableSeats: 2,
-    //             car: {
-    //                 model: "Honda City",
-    //                 registrationNumber: "MH14CD5678",
-    //                 image: "https://images.pexels.com/photos/1149831/pexels-photo-1149831.jpeg?auto=compress&cs=tinysrgb&h=200",
-    //             },
-    //             owner: {
-    //                 firstName: "Rakshit",
-    //                 lastName: "Kulkarni",
-    //             },
-    //         },
-    //            {
-    //             _id: "2",
-    //             pickupLocation: "Nayakaman",
-    //             dropLocation: "Kokapet Exit",
-    //             rideDateTime: new Date(Date.now() + 7200000).toISOString(),
-    //             availableSeats: 2,
-    //             car: {
-    //                 model: "Honda City",
-    //                 registrationNumber: "MH14CD5678",
-    //                 image: "https://images.pexels.com/photos/1149831/pexels-photo-1149831.jpeg?auto=compress&cs=tinysrgb&h=200",
-    //             },
-    //             owner: {
-    //                 firstName: "Rakshit",
-    //                 lastName: "Kulkarni",
-    //             },
-    //         },
-    //            {
-    //             _id: "2",
-    //             pickupLocation: "Nayakaman",
-    //             dropLocation: "Kokapet Exit",
-    //             rideDateTime: new Date(Date.now() + 7200000).toISOString(),
-    //             availableSeats: 2,
-    //             car: {
-    //                 model: "Honda City",
-    //                 registrationNumber: "MH14CD5678",
-    //                 image: "https://images.pexels.com/photos/1149831/pexels-photo-1149831.jpeg?auto=compress&cs=tinysrgb&h=200",
-    //             },
-    //             owner: {
-    //                 firstName: "Rakshit",
-    //                 lastName: "Kulkarni",
-    //             },
-    //         },
-    //            {
-    //             _id: "2",
-    //             pickupLocation: "Nayakaman",
-    //             dropLocation: "Kokapet Exit",
-    //             rideDateTime: new Date(Date.now() + 7200000).toISOString(),
-    //             availableSeats: 2,
-    //             car: {
-    //                 model: "Honda City",
-    //                 registrationNumber: "MH14CD5678",
-    //                 image: "https://images.pexels.com/photos/1149831/pexels-photo-1149831.jpeg?auto=compress&cs=tinysrgb&h=200",
-    //             },
-    //             owner: {
-    //                 firstName: "Rakshit",
-    //                 lastName: "Kulkarni",
-    //             },
-    //         },
-    //     ];
-
-    //     setRides(dummyRides);
-    //     setLoading(false);
-    // }, []);
-
     const fetchRides = async () => {
         try {
-            const response = await axiosInstance.get("/api/ride/active");
+            const response = await axiosInstance.post("/api/ride/requests", { userId: user?.id }, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             setRides(response.data.data);
             setLoading(false);
         } catch (err: any) {
@@ -168,8 +66,10 @@ export default function RideOffersPage() {
     };
 
     useEffect(() => {
-        fetchRides();
-    }, []);
+        if (isAuthenticated) {
+            fetchRides();
+        }
+    }, [token]);
 
     if (loading) return <p className="text-center mt-10 text-gray-500">Loading rides...</p>;
 
@@ -185,10 +85,10 @@ export default function RideOffersPage() {
                         key={ride._id}
                         className="bg-white rounded-xl shadow-md border border-gray-200 p-3 flex items-start gap-4"
                     >
-                        {ride.car.image ? (
+                        {ride.vehicle.image ? (
                             <img
-                                src={ride.car.image}
-                                alt={ride.car.model}
+                                src={`${process.env.NEXT_PUBLIC_API_URL}/api/image/files/${ride.vehicle.image}`}
+                                alt={ride.vehicle.model}
                                 className="w-20 h-20 rounded-lg object-cover shadow-sm"
                             />
                         ) : (
@@ -219,7 +119,7 @@ export default function RideOffersPage() {
                             <button
                                 onClick={() => handleRequest(ride._id)}
                                 disabled={requesting === ride._id}
-                                className="mt-2 w-full bg-blue-900 text-white py-1.5 rounded-md text-sm hover:bg-blue-950 transition"
+                                className="mt-2 w-full bg-[#0b2345] text-white py-1.5 rounded-md text-sm hover:bg-blue-950 transition"
                             >
                                 {requesting === ride._id ? "Sending..." : "Request Ride"}
                             </button>

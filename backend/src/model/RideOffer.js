@@ -19,6 +19,13 @@ const RideOfferSchema = new mongoose.Schema({
     type: Number,
     required: true,
     min: 1,
+    max: 5
+  },
+  type: {
+    type: String,
+    enum: ["departure", "return"],
+    required: true,
+    default: "departure",
   },
   vehicle: {
     type: mongoose.Schema.Types.ObjectId,

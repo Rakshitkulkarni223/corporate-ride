@@ -12,7 +12,7 @@ rideRouter.get("/active", getRides);
 
 
 rideRouter.post("/request", authenticateUser, sendRideRequest);
-rideRouter.get("/requests", authenticateUser, getRideRequests);
+rideRouter.post("/requests", authenticateUser, getRideRequests);
 rideRouter.post("/:id/respond", authenticateUser, checkOfferingStatus, respondToRideRequest);
 
 module.exports = rideRouter;

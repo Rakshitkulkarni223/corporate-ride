@@ -3,6 +3,7 @@ const User = require("../model/User");
 const { loginUserService } = require("../service/auth.service");
 const handleResponse = require("../utils/handleResponse");
 const { generateJWT } = require("../utils/token");
+const Vehicle = require('../model/Vehicle');
 
 const loginUser = async (req, res) => {
     await handleResponse(req, res, async () => {
@@ -35,11 +36,14 @@ const refreshToken = async (req, res) => {
 
         const tokenObj = await generateJWT(user, process.env.ACCESS_TOKEN_SECRET, "ACCESS")
 
+        const vehicle = await Vehicle.findOne({owner: user.id});
+
         return {
             status: 200,
             message: "Token refreshed",
             data: {
                 id: user._id,
+                vehicleId: vehicle?.id || null,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 isOfferingRides: user.isOfferingRides,

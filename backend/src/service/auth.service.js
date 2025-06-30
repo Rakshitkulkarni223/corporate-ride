@@ -1,6 +1,7 @@
 const User = require("../model/User");
 const bcrypt = require("bcryptjs");
 const { generateJWT } = require("../utils/token");
+const Vehicle = require("../model/Vehicle");
 
 const loginUserService = async ({ mobileNumber, password }) => {
     if (!mobileNumber || !password) {
@@ -34,6 +35,8 @@ const loginUserService = async ({ mobileNumber, password }) => {
     user.refreshToken = refreshTokenObj.token;
     await user.save();
 
+    const vehicle = await Vehicle.findOne({owner: user.id});
+
     return {
         status: 200,
         message: "Login successful",
@@ -42,6 +45,7 @@ const loginUserService = async ({ mobileNumber, password }) => {
             token: accessTokenObj.token,
             expires: accessTokenObj.expires,
             id: user._id,
+            vehicleId: vehicle?.id || null,
             isOfferingRides: user.isOfferingRides,
             firstName: user.firstName,
             lastName: user.lastName,

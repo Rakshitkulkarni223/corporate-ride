@@ -1,7 +1,7 @@
 const RideOffer = require("../model/RideOffer");
 const Vehicle = require("../model/Vehicle");
 
-const createRideOffer = async ({ pickupLocation, dropLocation, rideDateTime, availableSeats, vehicleId, userId }) => {
+const createRideOffer = async ({ pickupLocation, dropLocation, rideDateTime, availableSeats, vehicleId, type, userId }) => {
   const vehicle = await Vehicle.findOne({ _id: vehicleId, owner: userId });
   if (!vehicle) {
     throw { status: 403, message: "You are not authorized to use this vehicle." };
@@ -12,6 +12,7 @@ const createRideOffer = async ({ pickupLocation, dropLocation, rideDateTime, ava
     dropLocation,
     rideDateTime,
     availableSeats,
+    type,
     vehicle: vehicleId,
     owner: userId,
   });

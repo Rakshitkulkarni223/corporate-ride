@@ -76,7 +76,7 @@ export default function VehicleModal({
                         <button type="button" onClick={onClose} className="px-4 py-1 text-sm rounded-md bg-gray-200">
                             Cancel
                         </button>
-                        <button type="submit" className="px-4 py-1 text-sm rounded-md bg-blue-900 text-white">
+                        <button type="submit" className="px-4 py-1 text-sm rounded-md bg-[#0b2345] text-white">
                             Save
                         </button>
                     </div>
