@@ -1,4 +1,4 @@
-const { createRideOffer, getActiveRideOffers } = require("../service/rideOffer.service");
+const { createRideOffer, fetchRideOffers, updateRideOffer } = require("../service/rideOffer.service");
 const handleResponse = require("../utils/handleResponse");
 
 const createRide = (req, res) =>
@@ -17,12 +17,33 @@ const createRide = (req, res) =>
     });
   });
 
-const getRides = (req, res) =>
+const updateRide = (req, res) =>
+  handleResponse(req, res, async (req) => {
+    const userId = req.userId;
+    const rideId = req.params.id;
+    const { pickupLocation, dropLocation, rideDateTime, availableSeats, vehicleId, type } = req.body;
+
+    return await updateRideOffer({
+      pickupLocation,
+      dropLocation,
+      rideDateTime,
+      availableSeats,
+      vehicleId,
+      type,
+      userId,
+      rideId
+    });
+});
+
+const fetchRides = (req, res) =>
   handleResponse(req, res, async () => {
-    return await getActiveRideOffers();
+    const { status } = req.query;
+    const filter = { status }
+    return await fetchRideOffers(filter);
   });
 
 module.exports = {
   createRide,
-  getRides,
+  fetchRides,
+  updateRide
 };

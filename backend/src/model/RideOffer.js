@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { RIDE_OFFER_STATUS, RIDE_TYPE } = require("../helpers/constants");
 
 const RideOfferSchema = new mongoose.Schema({
   pickupLocation: {
@@ -23,9 +24,15 @@ const RideOfferSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ["departure", "return"],
+    enum: Object.values(RIDE_TYPE),
     required: true,
-    default: "departure",
+    default: RIDE_TYPE.DEPARTURE,
+  },
+  status: {
+    type: String,
+    enum: Object.values(RIDE_OFFER_STATUS),
+    required: true,
+    default: RIDE_OFFER_STATUS.ACTIVE
   },
   vehicle: {
     type: mongoose.Schema.Types.ObjectId,
