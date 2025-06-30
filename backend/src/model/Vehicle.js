@@ -14,7 +14,8 @@ const VehicleSchema = new mongoose.Schema({
     trim: true,
   },
   image: {
-    type: String
+    type: String,
+    required: true
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,

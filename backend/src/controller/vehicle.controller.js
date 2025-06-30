@@ -3,7 +3,8 @@ const handleResponse = require("../utils/handleResponse");
 
 const createVehicle = async (req, res) => {
     await handleResponse(req, res, async () => {
-        return await vehicleService.createVehicle(req.userId, req.body);
+        const {body, files } = req
+        return await vehicleService.createVehicle({userId: req.userId, body, files});
     })
 };
 

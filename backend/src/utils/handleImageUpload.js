@@ -1,4 +1,5 @@
 const { Readable } = require("stream");
+const mongoose = require("mongoose");
 const { getBucket } = require("../database");
 
 const postImageUpload = async (files, fields, mobileNumber) => {
@@ -36,6 +37,24 @@ const postImageUpload = async (files, fields, mobileNumber) => {
     return {
         uploadedFiles,
         uploadedFileIds
+    }
+}
+
+const getImageURL = (imageId) => {
+    try {
+        const fileId = new mongoose.Types.ObjectId(imageId);
+        const db = mongoose.connection.db;
+        const bucket = new mongoose.mongo.GridFSBucket(db, { bucketName: "uploads" });
+
+        const downloadStream = bucket.openDownloadStream(fileId);
+
+        downloadStream.on("error", () => {
+            res.status(404).send("File not found");
+        });
+
+        downloadStream.pipe(res);
+    } catch (err) {
+        res.status(400).send("Invalid file ID");
     }
 }
 

@@ -3,69 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import axiosInstance from "../utils/axiosInstance";
-import { useRouter } from "next/navigation";
-
-function VehicleModal({ onClose, onSave }: { onClose: () => void; onSave: (data: any) => void }) {
-    const [model, setModel] = useState("");
-    const [number, setNumber] = useState("");
-    const [image, setImage] = useState("");
-
-    const handleSubmit = (e: any) => {
-        e.preventDefault();
-        if (!model || !number) {
-            alert("Model and number are required");
-            return;
-        }
-        onSave({ model, number, image });
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-lg">
-                <h2 className="text-lg font-semibold mb-4">Add Vehicle Details</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="text-sm font-medium">Model</label>
-                        <input
-                            type="text"
-                            className="mt-1 w-full border p-2 rounded-md"
-                            value={model}
-                            onChange={(e) => setModel(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium">Registration Number</label>
-                        <input
-                            type="text"
-                            className="mt-1 w-full border p-2 rounded-md uppercase"
-                            value={number}
-                            onChange={(e) => setNumber(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium">Image URL (optional)</label>
-                        <input
-                            type="text"
-                            className="mt-1 w-full border p-2 rounded-md"
-                            value={image}
-                            onChange={(e) => setImage(e.target.value)}
-                        />
-                    </div>
-                    <div className="flex justify-end gap-3 pt-2">
-                        <button type="button" onClick={onClose} className="px-4 py-1 text-sm rounded-md bg-gray-200">
-                            Cancel
-                        </button>
-                        <button type="submit" className="px-4 py-1 text-sm rounded-md bg-blue-600 text-white">
-                            Save
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-}
+import VehicleModal from "../utils/VehicleModal";
 
 export default function ProfilePage() {
     const { user: authUser, token, isAuthenticated } = useAuth();
@@ -73,7 +11,9 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [isVehicleExisst, setIsVehicleExisst] = useState(false);
-    const router = useRouter();
+    const [vehicle, setVehicle] = useState<any>(null);
+
+    const [isOfferingRides, setIsOfferingRides] = useState(false);
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -81,10 +21,11 @@ export default function ProfilePage() {
                 const response = await axiosInstance.get(`/api/user/profile/${authUser?.id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                if (response.data.data.vehicle) {
+                const data = response.data.data;
+                setUser(data);
+                if (data.vehicle) {
                     setIsVehicleExisst(true);
                 }
-                setUser(response.data.data);
             } catch (err: any) {
                 if (err.response) {
                     console.log("Error response:", err.response.data);
@@ -104,23 +45,40 @@ export default function ProfilePage() {
         }
     }, [isAuthenticated]);
 
-    const handleSaveVehicle = async (data: any) => {
-        try {
-            const response = await axiosInstance.post("/api/vehicle/create", data, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setShowModal(false);
-            handleToggleRideOffer();
-        } catch (err: any) {
-            if (err.response) {
-                console.log("Error response:", err.response.data);
-                alert(err.response.data.message || "Something went wrong, Failed to save vehicle");
-            } else {
-                console.log("Network or other error:", err.message);
-                alert("Network error or server not reachable");
+    useEffect(() => {
+        const fetchVehicleDetails = async () => {
+            if (!isOfferingRides) {
+                setVehicle(null);
+                return;
             }
+            try {
+                const response = await axiosInstance.get(`/api/vehicle/`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = response.data.data;
+                setIsVehicleExisst(true);
+                setVehicle(data);
+
+            } catch (err: any) {
+                if (err.response) {
+                    console.log("Error response:", err.response.data);
+                    alert(err.response.data.message || "Something went wrong, Failed to load profile");
+                } else {
+                    console.log("Network or other error:", err.message);
+                    alert("Network error or server not reachable");
+                }
+            }
+            finally {
+                setLoading(false);
+            }
+        };
+
+        if (isAuthenticated) {
+            fetchVehicleDetails();
         }
-    };
+
+    }, [isAuthenticated, isVehicleExisst, isOfferingRides]);
+
 
     const handleToggleRideOffer = async () => {
         const newValue = !user.isOfferingRides;
@@ -135,6 +93,10 @@ export default function ProfilePage() {
             if (newValue && !isVehicleExisst) {
                 setShowModal(true);
             }
+            if (newValue) {
+                setVehicle(null);
+            }
+            setIsOfferingRides(newValue);
             alert(response.data.message);
         } catch (err: any) {
             if (err.response) {
@@ -147,6 +109,25 @@ export default function ProfilePage() {
         }
 
     };
+
+    const handleSaveVehicle = async (data: any) => {
+        try {
+            const response = await axiosInstance.post("/api/vehicle/create", data, {
+                headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
+            });
+            setIsVehicleExisst(true);
+            setShowModal(false)
+        } catch (err: any) {
+            if (err.response) {
+                console.log("Error response:", err.response.data);
+                alert(err.response.data.message || "Something went wrong, Failed to save vehicle");
+            } else {
+                console.log("Network or other error:", err.message);
+                alert("Network error or server not reachable");
+            }
+        }
+    };
+
 
     if (loading) {
         return <p className="p-4 text-center mt-10 text-gray-500">Loading profile...</p>;
@@ -183,7 +164,22 @@ export default function ProfilePage() {
                 </div>
             </div>
 
+            <div className="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between">
+                <div className="text-sm font-medium text-gray-800">Offering Rides</div>
+                <button
+                    onClick={handleToggleRideOffer}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-full shadow-sm transition cursor-pointer 
+                    ${user.isOfferingRides ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}
+                >
+                    {user.isOfferingRides ? "Enabled" : "Disabled"}
+                </button>
+            </div>
+
+
             <div className="bg-white rounded-xl shadow-sm p-4 space-y-2 text-sm text-gray-800">
+                <div className="font-medium text-base">
+                    Personal Details
+                </div>
                 <div>
                     <strong>Age:</strong> {user.profile?.age || "-"}
                 </div>
@@ -198,45 +194,44 @@ export default function ProfilePage() {
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between">
-                <div className="text-sm font-medium text-gray-800">Offering Rides</div>
-                <button
-                    onClick={handleToggleRideOffer}
-                    className={`px-4 py-1.5 text-sm font-medium rounded-full shadow-sm transition cursor-pointer 
-                    ${user.isOfferingRides ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}
-                >
-                    {user.isOfferingRides ? "Enabled" : "Disabled"}
-                </button>
-            </div>
+            {vehicle && (
+                <div className="bg-white rounded-xl shadow-sm p-4 space-y-3">
+                    <div className="text-base font-medium mb-2">
+                        Vehicle Details
+                    </div>
 
-            {/* {showModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
-                    <div className="bg-white rounded-xl p-6 w-80 shadow-lg">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-2">Vehicle Required</h2>
-                        <p className="text-sm text-gray-600 mb-4">
-                            To start offering rides, you must first register a vehicle.
-                        </p>
-                        <div className="flex justify-end gap-2">
-                            <button
-                                onClick={() => setShowModal(false)}
-                                className="px-3 py-1.5 text-sm rounded-md bg-gray-100 text-gray-700"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleGoToVehicleForm}
-                                className="px-3 py-1.5 text-sm rounded-md bg-blue-600 text-white"
-                            >
-                                Add Vehicle
-                            </button>
+                    <div className="flex items-center gap-4">
+                        {vehicle.image ? (
+                            <img
+                                src={`${process.env.NEXT_PUBLIC_API_URL}/api/image/files/${vehicle.image}`}
+                                alt="vehicle"
+                                className="w-20 h-16 rounded-lg object-cover border shadow-sm"
+                            />
+                        ) : (
+                            <div className="w-20 h-16 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-xs border">
+                                No Image
+                            </div>
+                        )}
+
+                        <div className="space-y-1">
+                            <div className="text-base font-medium text-gray-900">
+                                {vehicle.model}
+                            </div>
+                            <div className="text-sm text-gray-600 uppercase tracking-wide">
+                                {vehicle.number}
+                            </div>
                         </div>
                     </div>
                 </div>
-            )} */}
+
+            )}
 
             {showModal && (
                 <VehicleModal
-                    onClose={() => setShowModal(false)}
+                    onClose={() => {
+                        setShowModal(false);
+                        handleToggleRideOffer();
+                    }}
                     onSave={handleSaveVehicle}
                 />
             )}

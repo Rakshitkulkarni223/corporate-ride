@@ -6,6 +6,7 @@ const userRouter = require("./src/router/user");
 const authRouter = require("./src/router/auth");
 const rideRouter = require("./src/router/ride");
 const vehicleRouter = require("./src/router/vehicle");
+const imageRouter = require("./src/router/image");
 
 const app = express();
 require("dotenv").config();
@@ -24,6 +25,7 @@ app.use("/api/user", userRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/ride", rideRouter);
 app.use("/api/vehicle", vehicleRouter);
+app.use("/api/image", imageRouter);
 
 app.get("/", (req, res) => {
   res.json({
