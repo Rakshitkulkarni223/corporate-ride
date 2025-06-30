@@ -1,4 +1,4 @@
-const { createRideRequest, getRelevantRideRequests } = require("../service/rideRequest.service");
+const { createRideRequest, getMyRideRequests, getOfferedRideRequests } = require("../service/rideRequest.service");
 const handleResponse = require("../utils/handleResponse");
 
 const sendRideRequest = async (req, res) => {
@@ -10,15 +10,29 @@ const sendRideRequest = async (req, res) => {
 };
 
 
-const getRideRequests = async (req, res) => {
+const getMyRequests = async (req, res) => {
   await handleResponse(req, res, async () => {
     const { userId } = req.body;
+    const { status } = req.query;
     const loggedInUserId = req.userId;
-    return await getRelevantRideRequests({ userId, loggedInUserId });
+    const filter = { status, passenger: req.userId }
+    return await getMyRideRequests({ userId, loggedInUserId, filter });
+  })
+};
+
+
+const getOfferedRequests = async (req, res) => {
+  await handleResponse(req, res, async () => {
+    const { userId } = req.body;
+    const { status } = req.query;
+    const loggedInUserId = req.userId;
+    const filter = { status, passenger: req.userId }
+    return await getOfferedRideRequests({ userId, loggedInUserId, filter });
   })
 };
 
 module.exports = {
   sendRideRequest,
-  getRideRequests
+  getMyRequests,
+  getOfferedRequests
 }

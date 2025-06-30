@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { RIDE_REQUEST_STATUS } = require("../helpers/constants");
 
 const RideRequestSchema = new mongoose.Schema({
     rideOffer: {
@@ -13,7 +14,7 @@ const RideRequestSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["sent", "accepted", "rejected"],
+        enum: Object.values(RIDE_REQUEST_STATUS),
         default: "sent",
     },
     message: {
