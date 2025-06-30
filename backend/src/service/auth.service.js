@@ -41,7 +41,7 @@ const loginUserService = async ({ mobileNumber, password }) => {
         data: {
             token: accessTokenObj.token,
             expires: accessTokenObj.expires,
-            userId: user._id,
+            id: user._id,
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,

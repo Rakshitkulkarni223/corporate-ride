@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "./contexts/authContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import AuthInitializer from "./utils/AuthInitializer";
+import TopNav from "./components/TopNav";
+import BottomNav from "./components/BottomNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,13 +27,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-  <html lang="en" className="h-full w-full">
+    <html lang="en" className="h-full w-full">
       <body
-        className={`relative mx-auto h-screen max-w-lg overflow-hidden border-[1px] rounded-2xl shadow-lg ${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`min-h-screen w-full mx-auto max-w-lg overflow-hidden border-[1px] rounded-2xl shadow-lg ${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
           <AuthInitializer />
-          {children}
+          <TopNav />
+          <main className="overflow-y-auto h-[calc(100vh-1.5rem-1.75rem)]">
+            {children}
+          </main>
+          <BottomNav />
         </AuthProvider>
       </body>
     </html>

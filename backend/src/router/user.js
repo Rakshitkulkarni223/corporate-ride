@@ -1,11 +1,12 @@
 const express = require("express");
-const { userController } = require('../controller');
+
 const upload = require("../config/multer");
 const authenticateUser = require("../middleware/authMiddleware");
+const { registerUser, updateUserProfile, getUserById, getUserProfileById } = require("../controller/user.controller");
 
 const userRouter = express.Router();
 
-userRouter.post("/register",userController.registerUser);
+userRouter.post("/register", registerUser);
 
 userRouter.put(
   "/update/:id",
@@ -15,10 +16,11 @@ userRouter.put(
     { name: "personalIdCardUrl", maxCount: 1 },
     { name: "avatar", maxCount: 1 },
   ]),
-  userController.updateUserProfile
+  updateUserProfile
 );
 
-userRouter.get("/:id",authenticateUser,userController.getUserById);
-userRouter.get("/profile/:id",authenticateUser,userController.getUserProfileById);
+userRouter.put("/toggle-offering/:id",authenticateUser,updateUserProfile);
+userRouter.get("/:id", authenticateUser, getUserById);
+userRouter.get("/profile/:id", authenticateUser, getUserProfileById);
 
 module.exports = userRouter;

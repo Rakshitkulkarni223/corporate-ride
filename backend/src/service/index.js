@@ -1,2 +1,5 @@
 module.exports.userService = require('./user.service')
 module.exports.authService = require('./auth.service')
+module.exports.rideOfferService = require('./rideOffer.service')
+module.exports.rideRequestService = require('./rideRequest.service')
+module.exports.rideRespondService = require('./rideRespond.service')

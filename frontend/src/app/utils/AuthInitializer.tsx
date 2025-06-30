@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import axiosInstance from "../utils/axiosInstance";
-import { useAuth } from "../contexts/authContext";
+import { useAuth } from "../contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
 export default function AuthInitializer() {

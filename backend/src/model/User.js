@@ -38,6 +38,11 @@ const UserSchema = new mongoose.Schema(
 
     refreshToken: { type: String },
 
+    isOfferingRides: {
+      type: Boolean,
+      default: false,
+    },
+
     profile: UserProfileSchema,
   },
   { timestamps: true }

@@ -30,8 +30,30 @@ const saveUserDetails = async (userObj) => {
   };
 };
 
+const toggleOfferingStatusService = async ({ userId, loggedInUserId }) => {
+  checkUserAccess(userId, loggedInUserId);
 
-const updateUserDetails = async ({ userId, files, body }) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw {
+      status: 404,
+      message: "User not found.",
+    };
+  }
+  user.isOfferingRides = !user.isOfferingRides;
+  await user.save();
+
+  return {
+    status: 200,
+    message: `Ride offering ${user.isOfferingRides ? "enabled" : "disabled"}.`,
+    data: { isOfferingRides: user.isOfferingRides },
+  };
+}
+
+
+const updateUserDetails = async ({ userId, files, body, loggedInUserId }) => {
+  checkUserAccess(userId, loggedInUserId)
+
   const existingUser = await User.findById(userId);
   if (!existingUser) {
     throw {
@@ -127,4 +149,4 @@ const getUserProfileDetails = async (userId, loggedInUserId) => {
 
 }
 
-module.exports = { saveUserDetails, updateUserDetails, getUserDetails, getUserProfileDetails };
+module.exports = { saveUserDetails, updateUserDetails, getUserDetails, getUserProfileDetails, toggleOfferingStatusService };

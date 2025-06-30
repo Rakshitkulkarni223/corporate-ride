@@ -4,7 +4,7 @@ import { useState } from "react";
 import Head from "next/head";
 import axiosInstance from "../utils/axiosInstance";
 import Link from "next/link";
-import { useAuth } from "../contexts/authContext";
+import { useAuth } from "../contexts/AuthContext";
 import { CONSTANTS } from "../utils/constants";
 import { useRouter } from "next/navigation";
 

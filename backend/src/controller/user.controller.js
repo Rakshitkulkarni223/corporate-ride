@@ -1,6 +1,5 @@
 const User = require("../model/User");
-const { saveUserDetails, updateUserDetails, getUserDetails, getUserProfileDetails } = require("../service/user.service");
-const checkUserAccess = require("../utils/checkAccess");
+const { saveUserDetails, updateUserDetails, getUserDetails, getUserProfileDetails, toggleOfferingStatusService } = require("../service/user.service");
 const handleResponse = require("../utils/handleResponse");
 
 const registerUser = async (req, res) => {
@@ -16,16 +15,15 @@ const updateUserProfile = async (req, res) => {
         const { body, files } = req;
         const userId = params.id;
         const loggedInUserId = req.userId;
-        checkUserAccess(userId, loggedInUserId);
+        return await updateUserDetails({ userId, files, body, loggedInUserId });
+    });
+};
 
-        if (!userId) {
-            throw {
-                status: 400,
-                message: "User ID is missing.",
-            };
-        }
-
-        return await updateUserDetails({ userId, files, body });
+const toggleOfferingStatus = async (req, res) => {
+     await handleResponse(req, res, async () => {
+        const userId = params.id;
+        const loggedInUserId = req.userId;
+        return await toggleOfferingStatusService({ userId, loggedInUserId });
     });
 };
 
@@ -39,16 +37,17 @@ const getUserById = async (req, res) => {
 
 
 const getUserProfileById = async (req, res) => {
-  await handleResponse(req, res, async () => {
-    const userId = req.params.id;
-    const loggedInUserId = req.userId;
-    return await getUserProfileDetails(userId, loggedInUserId);
-  });
+    await handleResponse(req, res, async () => {
+        const userId = req.params.id;
+        const loggedInUserId = req.userId;
+        return await getUserProfileDetails(userId, loggedInUserId);
+    });
 };
 
 module.exports = {
     registerUser,
     updateUserProfile,
     getUserById,
-    getUserProfileById
+    getUserProfileById,
+    toggleOfferingStatus
 };
