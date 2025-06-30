@@ -5,6 +5,7 @@ const { connectDB } = require("./src/database/index");
 const userRouter = require("./src/router/user");
 const authRouter = require("./src/router/auth");
 const rideRouter = require("./src/router/ride");
+const vehicleRouter = require("./src/router/vehicle");
 
 const app = express();
 require("dotenv").config();
@@ -22,6 +23,7 @@ connectDB();
 app.use("/api/user", userRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/ride", rideRouter);
+app.use("/api/vehicle", vehicleRouter);
 
 app.get("/", (req, res) => {
   res.json({

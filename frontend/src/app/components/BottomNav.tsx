@@ -32,13 +32,13 @@ export default function BottomNav() {
     <div className="fixed bottom-0 left-0 right-0 border-t rounded-b-2xl w-full max-w-lg mx-auto h-13 flex items-center justify-around shadow-sm">
       {role === "rider" ? (
         <>
-          <NavButton label="Home" href="/" active={pathname === "/"} />
+          <NavButton label="Home" href="/home" active={pathname === "/home"} />
           <NavButton label="My Offers" href="/offers" active={pathname === "/offers"} />
           <NavButton label="Profile" href="/profile" active={pathname === "/profile"} />
         </>
       ) : (
         <>
-          <NavButton label="Home" href="/" active={pathname === "/"} />
+          <NavButton label="Home" href="/home" active={pathname === "/home"} />
           <NavButton label="My Requests" href="/requests" active={pathname === "/requests"} />
           <NavButton label="Profile" href="/profile" active={pathname === "/profile"} />
         </>

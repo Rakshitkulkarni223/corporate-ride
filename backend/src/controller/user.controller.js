@@ -21,7 +21,7 @@ const updateUserProfile = async (req, res) => {
 
 const toggleOfferingStatus = async (req, res) => {
      await handleResponse(req, res, async () => {
-        const userId = params.id;
+        const userId = req.params.id;
         const loggedInUserId = req.userId;
         return await toggleOfferingStatusService({ userId, loggedInUserId });
     });
@@ -31,7 +31,7 @@ const getUserById = async (req, res) => {
     await handleResponse(req, res, async () => {
         const userId = req.params.id;
         const loggedInUserId = req.userId;
-        return await getUserDetails(userId, loggedInUserId);
+        return await getUserDetails({userId, loggedInUserId});
     });
 };
 
@@ -40,7 +40,7 @@ const getUserProfileById = async (req, res) => {
     await handleResponse(req, res, async () => {
         const userId = req.params.id;
         const loggedInUserId = req.userId;
-        return await getUserProfileDetails(userId, loggedInUserId);
+        return await getUserProfileDetails({userId, loggedInUserId});
     });
 };
 

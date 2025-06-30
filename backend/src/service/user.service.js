@@ -1,5 +1,6 @@
 const { getBucket } = require("../database");
 const User = require("../model/User");
+const Vehicle = require("../model/Vehicle");
 const checkUserAccess = require("../utils/checkAccess");
 const { postImageUpload } = require("../utils/handleImageUpload");
 
@@ -111,7 +112,7 @@ const updateUserDetails = async ({ userId, files, body, loggedInUserId }) => {
 };
 
 
-const getUserDetails = async (userId, loggedInUserId) => {
+const getUserDetails = async ({ userId, loggedInUserId }) => {
   checkUserAccess(userId, loggedInUserId);
 
   const user = await User.findById(userId).select("-password -refreshToken");
@@ -125,15 +126,15 @@ const getUserDetails = async (userId, loggedInUserId) => {
   return {
     status: 200,
     message: "User fetched successfully",
-    data: user,
+    data: { ...user },
   };
 
 }
 
-const getUserProfileDetails = async (userId, loggedInUserId) => {
+const getUserProfileDetails = async ({ userId, loggedInUserId }) => {
   checkUserAccess(userId, loggedInUserId);
 
-  const user = await User.findById(userId).select("profile");
+  const user = await User.findById(userId).select("firstName lastName email mobileNumber isOfferingRides profile");
   if (!user) {
     throw {
       status: 404,
@@ -141,10 +142,34 @@ const getUserProfileDetails = async (userId, loggedInUserId) => {
     };
   }
 
+  const vehicle = await Vehicle.findOne({ owner: userId }).select("model number image");
+
   return {
     status: 200,
     message: "Profile fetched successfully",
-    data: user.profile,
+    data: {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      mobileNumber: user.mobileNumber,
+      isOfferingRides: user.isOfferingRides,
+      profile: {
+        age: user.profile?.age || null,
+        gender: user.profile?.gender || null,
+        homeAddress: user.profile?.homeAddress || null,
+        officeAddress: user.profile?.officeAddress || null,
+        avatar: user.profile?.avatar || null,
+        officeIdCardUrl: user.profile?.officeIdCardUrl || null,
+        personalIdCardUrl: user.profile?.personalIdCardUrl || null,
+      },
+      vehicle: vehicle
+        ? {
+            model: vehicle.model,
+            number: vehicle.number,
+            image: vehicle.image || null,
+          }
+        : null,
+    }
   };
 
 }
