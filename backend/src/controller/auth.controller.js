@@ -42,6 +42,7 @@ const refreshToken = async (req, res) => {
                 id: user._id,
                 firstName: user.firstName,
                 lastName: user.lastName,
+                isOfferingRides: user.isOfferingRides,
                 email: user.email,
                 mobileNumber: user.mobileNumber,
                 token: tokenObj.token,

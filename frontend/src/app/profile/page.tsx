@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import axiosInstance from "../utils/axiosInstance";
 import VehicleModal from "../utils/VehicleModal";
+import { RiPencilLine } from "react-icons/ri";
 
 export default function ProfilePage() {
-    const { user: authUser, token, isAuthenticated } = useAuth();
+    const { user: authUser, token, isAuthenticated, updateUser } = useAuth();
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -26,6 +27,8 @@ export default function ProfilePage() {
                 if (data.vehicle) {
                     setIsVehicleExisst(true);
                 }
+                setIsOfferingRides(data.isOfferingRides)
+                updateUser({ isOfferingRides: data.isOfferingRides });
             } catch (err: any) {
                 if (err.response) {
                     console.log("Error response:", err.response.data);
@@ -97,6 +100,7 @@ export default function ProfilePage() {
                 setVehicle(null);
             }
             setIsOfferingRides(newValue);
+            updateUser({ isOfferingRides: newValue });
             alert(response.data.message);
         } catch (err: any) {
             if (err.response) {
@@ -175,10 +179,16 @@ export default function ProfilePage() {
                 </button>
             </div>
 
-
             <div className="bg-white rounded-xl shadow-sm p-4 space-y-2 text-sm text-gray-800">
-                <div className="font-medium text-base">
-                    Personal Details
+                <div className="flex justify-between items-center">
+                    <div className="font-medium text-base">Personal Details</div>
+                    <button
+                        onClick={() => alert("Open edit modal for personal details")}
+                        className="text-gray-500 hover:text-blue-600 transition"
+                        title="Edit"
+                    >
+                        <RiPencilLine className="text-lg" />
+                    </button>
                 </div>
                 <div>
                     <strong>Age:</strong> {user.profile?.age || "-"}
@@ -196,8 +206,15 @@ export default function ProfilePage() {
 
             {vehicle && (
                 <div className="bg-white rounded-xl shadow-sm p-4 space-y-3">
-                    <div className="text-base font-medium mb-2">
-                        Vehicle Details
+                    <div className="flex justify-between items-center">
+                        <div className="font-medium text-base">Vehicle Details</div>
+                        <button
+                            onClick={() => alert("Open edit modal for personal details")}
+                            className="text-gray-500 hover:text-blue-600 transition"
+                            title="Edit"
+                        >
+                            <RiPencilLine className="text-lg" />
+                        </button>
                     </div>
 
                     <div className="flex items-center gap-4">
@@ -225,6 +242,43 @@ export default function ProfilePage() {
                 </div>
 
             )}
+
+            {(user.profile?.officeIdCardUrl || user.profile?.personalIdCardUrl) && (
+                <div className="bg-white rounded-xl shadow-sm p-4 space-y-3">
+                    <div className="text-base font-medium mb-2 text-gray-800">
+                        Uploaded Documents
+                    </div>
+
+                    <div className="flex gap-4 flex-wrap">
+                        {user.profile?.personalIdCardUrl ? (
+                            <div className="space-y-1">
+                                <div className="text-sm font-medium text-gray-700">Personal ID Card</div>
+                                <img
+                                    src={`${process.env.NEXT_PUBLIC_API_URL}/api/image/files/${user.profile.personalIdCardUrl}`}
+                                    alt="Personal ID"
+                                    className="w-40 h-28 object-cover border rounded-md shadow"
+                                />
+                            </div>
+                        ) : (
+                            <div className="text-sm text-gray-500">No Personal ID Uploaded</div>
+                        )}
+
+                        {user.profile?.officeIdCardUrl ? (
+                            <div className="space-y-1">
+                                <div className="text-sm font-medium text-gray-700">Office ID Card</div>
+                                <img
+                                    src={`${process.env.NEXT_PUBLIC_API_URL}/api/image/files/${user.profile.officeIdCardUrl}`}
+                                    alt="Office ID"
+                                    className="w-40 h-28 object-cover border rounded-md shadow"
+                                />
+                            </div>
+                        ) : (
+                            <div className="text-sm text-gray-500">No Office ID Uploaded</div>
+                        )}
+                    </div>
+                </div>
+            )}
+
 
             {showModal && (
                 <VehicleModal

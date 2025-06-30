@@ -24,12 +24,14 @@ interface AuthState {
 type AuthAction =
   | { type: "login"; payload: { user: User; token: string; expires: string } }
   | { type: "logout" }
-  | { type: "status"; payload: { status: string } };
+  | { type: "status"; payload: { status: string } }
+  | { type: "updateUser"; payload: Partial<User> };
 
 interface AuthContextType extends AuthState {
   login: (user: User, token: string, expires: string) => void;
   logout: () => void;
   setAuthStatus: (status: string) => void;
+  updateUser: (updates: Partial<User>) => void;
 }
 
 
@@ -63,6 +65,11 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         ...state,
         status: action.payload.status,
       };
+    case "updateUser":
+      return {
+        ...state,
+        user: { ...state.user, ...action.payload },
+      };
     default:
       return state;
   }
@@ -89,14 +96,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     dispatch({ type: "status", payload: { status } });
   }, []);
 
+  const updateUser = useCallback((updates: Partial<User>) => {
+    dispatch({ type: "updateUser", payload: updates });
+  }, []);
+
   const value = useMemo(
     () => ({
       ...state,
       login,
       logout,
       setAuthStatus,
+      updateUser
     }),
-    [state, login, logout, setAuthStatus]
+    [state, login, logout, setAuthStatus, updateUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
