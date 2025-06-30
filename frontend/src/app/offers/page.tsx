@@ -5,58 +5,67 @@ import axiosInstance from "../utils/axiosInstance";
 import { useAuth } from "../contexts/AuthContext";
 import ScheduleRideModal from "../Modals/ScheduleRideModal";
 
-const filterOptions = ["All", "Active", "Completed"];
+const filterOptions = ["Active", "Completed", "All"];
+
+interface RideOfferDetails {
+    _id: string;
+    pickupLocation: string;
+    dropLocation: string;
+    rideDateTime: string;
+    availableSeats: number;
+    status: string
+}
 
 export default function MyOffersPage() {
     const { token, user, isAuthenticated } = useAuth();
-    const [offers, setOffers] = useState<any[]>([]);
-    const [filteredOffers, setFilteredOffers] = useState<any[]>([]);
+    const [filteredOffers, setFilteredOffers] = useState<RideOfferDetails[]>([]);
     const [filter, setFilter] = useState("Active");
     const [loading, setLoading] = useState(true);
-
 
     const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
         const fetchOffers = async () => {
             try {
-                const response = await axiosInstance.get("/api/ride/active", {
+                const response = await axiosInstance.get(`/api/ride?status=${filter}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
-                setOffers(response.data.data || []);
+                console.log(response.data.data)
                 setFilteredOffers(response.data.data || []);
             } catch (err: any) {
-                console.error(err);
+                if (err.response) {
+                    console.log("Error response:", err.response.data);
+                    alert(err.response.data.message || "Something went wrong");
+                } else {
+                    console.log("Network or other error:", err.message);
+                    alert("Network error or server not reachable");
+                }
             } finally {
                 setLoading(false);
             }
         };
-        if(isAuthenticated){
+        if (isAuthenticated) {
             fetchOffers();
         }
-    }, [isAuthenticated,token]);
-
-    useEffect(() => {
-        if (filter === "All") {
-            setFilteredOffers(offers);
-        } else {
-            const lower = filter.toLowerCase();
-            setFilteredOffers(offers.filter((offer) => offer.status === lower));
-        }
-    }, [filter, offers]);
+    }, [isAuthenticated, token, filter]);
 
     const handleCreateOffer = () => setShowModal(true);
 
     const handleSubmitRide = async (formData: any) => {
         try {
-            await axiosInstance.post("/api/ride/create", {...formData, vehicleId: user?.vehicleId}, {
+            await axiosInstance.post("/api/ride/create", { ...formData, vehicleId: user?.vehicleId }, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             alert("Ride scheduled!");
             setShowModal(false);
         } catch (err: any) {
-            console.error(err);
-            alert("Failed to schedule ride");
+            if (err.response) {
+                console.log("Error response:", err.response.data);
+                alert(err.response.data.message || "Something went wrong");
+            } else {
+                console.log("Network or other error:", err.message);
+                alert("Network error or server not reachable");
+            }
         }
     };
 
@@ -87,7 +96,6 @@ export default function MyOffersPage() {
                     ))}
                 </div>
             </div>
-
 
             {loading ? (
                 <p className="text-center text-gray-500 mt-6">Loading offers...</p>

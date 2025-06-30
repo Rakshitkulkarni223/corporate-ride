@@ -48,34 +48,33 @@ export default function ProfilePage() {
         }
     }, [isAuthenticated]);
 
+    const fetchVehicleDetails = async () => {
+        if (!isOfferingRides) {
+            setVehicle(null);
+            return;
+        }
+        try {
+            const response = await axiosInstance.get(`/api/vehicle/`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = response.data.data;
+            setIsVehicleExisst(true);
+            setVehicle(data);
+        } catch (err: any) {
+            if (err.response) {
+                console.log("Error response:", err.response.data);
+                alert(err.response.data.message || "Something went wrong, Failed to load profile");
+            } else {
+                console.log("Network or other error:", err.message);
+                alert("Network error or server not reachable");
+            }
+        }
+        finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchVehicleDetails = async () => {
-            if (!isOfferingRides) {
-                setVehicle(null);
-                return;
-            }
-            try {
-                const response = await axiosInstance.get(`/api/vehicle/`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                const data = response.data.data;
-                setIsVehicleExisst(true);
-                setVehicle(data);
-
-            } catch (err: any) {
-                if (err.response) {
-                    console.log("Error response:", err.response.data);
-                    alert(err.response.data.message || "Something went wrong, Failed to load profile");
-                } else {
-                    console.log("Network or other error:", err.message);
-                    alert("Network error or server not reachable");
-                }
-            }
-            finally {
-                setLoading(false);
-            }
-        };
-
         if (isAuthenticated) {
             fetchVehicleDetails();
         }
@@ -120,6 +119,7 @@ export default function ProfilePage() {
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
             });
             setIsVehicleExisst(true);
+            await fetchVehicleDetails();
             setShowModal(false)
         } catch (err: any) {
             if (err.response) {

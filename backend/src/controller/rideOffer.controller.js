@@ -33,13 +33,13 @@ const updateRide = (req, res) =>
       userId,
       rideId
     });
-});
+  });
 
 const fetchRides = (req, res) =>
   handleResponse(req, res, async () => {
     const { status } = req.query;
-    const filter = { status }
-    return await fetchRideOffers(filter);
+    const filter = { status, owner: req.userId }
+    return await fetchRideOffers({ filter });
   });
 
 module.exports = {

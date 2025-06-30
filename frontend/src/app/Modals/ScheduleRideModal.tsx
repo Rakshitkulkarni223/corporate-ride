@@ -3,13 +3,14 @@ import { useState } from "react";
 import { IoClose } from "react-icons/io5";
 import { FaInfoCircle } from "react-icons/fa";
 import getFormattedDate from "../utils/dateHandler";
+import { RIDE_TYPE, RideType } from "../utils/constants";
 
 export default function ScheduleRideModal({ onClose, onSubmit }: any) {
     const [pickupLocation, setPickupLocation] = useState("");
     const [dropLocation, setDropLocation] = useState("");
     const [rideDateTime, setRideDateTime] = useState("");
     const [availableSeats, setAvailableSeats] = useState(1);
-    const [rideType, setRideType] = useState("departure");
+    const [rideType, setRideType] = useState<RideType>(RIDE_TYPE.DEPARTURE as RideType);
 
     const handleSubmit = () => {
         if (!pickupLocation || !dropLocation || !rideDateTime || !availableSeats || !rideType) {
@@ -89,11 +90,13 @@ export default function ScheduleRideModal({ onClose, onSubmit }: any) {
                         </label>
                         <select
                             value={rideType}
-                            onChange={(e) => setRideType(e.target.value)}
+                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                                setRideType(e.target.value as RideType)
+                            }
                             className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
-                            <option value="departure">Departure</option>
-                            <option value="return">Return</option>
+                            <option value={RIDE_TYPE.DEPARTURE}>Departure</option>
+                            <option value={RIDE_TYPE.RETURN}>Return</option>
                         </select>
                     </div>
                 </div>

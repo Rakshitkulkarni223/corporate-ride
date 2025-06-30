@@ -10,9 +10,9 @@ export default function TopNav() {
     let title = "Available Rides";
 
     if (pathname.includes("offers")) {
-        title = "My Shared Rides";
+        title = "My Offered Rides";
     } else if (pathname.includes("requests")) {
-        title = "My Requests";
+        title = "My Ride Requests";
     } else if (pathname.includes("profile")) {
         title = "Profile";
     } else if (pathname.includes("home")) {

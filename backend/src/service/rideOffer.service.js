@@ -70,18 +70,11 @@ const updateRideOffer = async ({
 };
 
 
-const fetchRideOffers = async (filter) => {
+const fetchRideOffers = async ({ filter }) => {
   if (!Object.values(RIDE_OFFER_STATUS).includes(filter.status)) {
-    throw {
-      status: 400,
-      message: "Ride offer status is invalid",
-    };
+    delete filter.status
   }
-  
-  const rides = await RideOffer.find(filter)
-    .populate("vehicle", "model number image")
-    .populate("owner", "firstName lastName");
-
+  const rides =  await RideOffer.find(filter).select("_id pickupLocation dropLocation rideDateTime availableSeats status");
   return {
     message: "Fetched active ride offers.",
     data: [...rides],
