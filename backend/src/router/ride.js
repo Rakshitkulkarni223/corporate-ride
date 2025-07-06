@@ -9,7 +9,7 @@ const rideRouter = express.Router();
 
 rideRouter.post("/create", authenticateUser, checkOfferingStatus, createRide);
 rideRouter.post("/update/:id", authenticateUser, checkOfferingStatus, updateRide);
-rideRouter.get("/", authenticateUser,fetchRides); //  /api/ride?status=active
+rideRouter.post("/",fetchRides); //  /api/ride?status=active
 
 
 rideRouter.post("/request/send", authenticateUser, sendRideRequest);

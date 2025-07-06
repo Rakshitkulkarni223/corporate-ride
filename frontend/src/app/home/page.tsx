@@ -32,7 +32,7 @@ export default function RideOffersPage() {
 
     const fetchRides = async () => {
         try {
-            const response = await axiosInstance.get(`/api/ride?status=${RIDE_OFFER_STATUS.ACTIVE}`);
+            const response = await axiosInstance.post(`/api/ride?status=${RIDE_OFFER_STATUS.ACTIVE}&mode=requester`, { userId: user?.id });
             const allRides = response.data.data;
             const rideIds = response.data?.data?.map((req: any) => req._id) || [];
             setSentRequests(rideIds);
@@ -44,7 +44,6 @@ export default function RideOffersPage() {
 
             setRides(visibleRides);
 
-            // Populate sentRequests array
             const sent = visibleRides
                 .filter((ride: RideOffer) => ride.requests?.[0]?.status === "Sent")
                 .map((ride: RideOffer) => ride._id);

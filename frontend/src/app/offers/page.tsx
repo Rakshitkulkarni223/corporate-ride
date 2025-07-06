@@ -23,7 +23,7 @@ export default function MyOffersPage() {
     const { token, user, isAuthenticated } = useAuth();
 
     const [filteredOffers, setFilteredOffers] = useState<RideOfferDetails[]>([]);
-    const [filter, setFilter] = useState("Active");
+    const [status, setStatus] = useState("Active");
     const [loading, setLoading] = useState(true);
 
     const [showModal, setShowModal] = useState(false);
@@ -31,9 +31,7 @@ export default function MyOffersPage() {
     useEffect(() => {
         const fetchOffers = async () => {
             try {
-                const response = await axiosInstance.get(`/api/ride?status=${filter}`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                const response = await axiosInstance.post(`/api/ride?status=${status}&mode=offerer`, { userId: user?.id });
                 console.log(response.data)
                 setFilteredOffers(response.data.data || []);
             } catch (err: any) {
@@ -51,7 +49,7 @@ export default function MyOffersPage() {
         if (isAuthenticated) {
             fetchOffers();
         }
-    }, [isAuthenticated, token, filter]);
+    }, [isAuthenticated, token, status]);
 
     const handleCreateOffer = () => setShowModal(true);
 
@@ -95,8 +93,8 @@ export default function MyOffersPage() {
                     {filterOptions.map((option) => (
                         <button
                             key={option}
-                            onClick={() => setFilter(option)}
-                            className={`px-4 py-1.5 cursor-pointer rounded-full text-xs font-medium border transition ${filter === option
+                            onClick={() => setStatus(option)}
+                            className={`px-4 py-1.5 cursor-pointer rounded-full text-xs font-medium border transition ${status === option
                                 ? "bg-blue-100 text-blue-900 border-blue-300"
                                 : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                                 }`}

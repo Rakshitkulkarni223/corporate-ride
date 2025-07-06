@@ -37,10 +37,20 @@ const updateRide = (req, res) =>
 
 const fetchRides = (req, res) =>
   handleResponse(req, res, async () => {
-    const { status } = req.query;
-    const filter = { status, owner: req.userId }
+    const { status, mode } = req.query;
+    const { userId } = req.body;
+
+    const filter = { status };
+
+    if (mode === "offerer") {
+      filter.owner = userId;
+    } else {
+      filter.userId = userId;
+    }
+
     return await fetchRideOffers({ filter });
   });
+
 
 module.exports = {
   createRide,
