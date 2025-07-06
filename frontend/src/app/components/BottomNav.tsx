@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "../contexts/AuthContext";
 
 interface NavButtonProps {
   label: string;
@@ -11,10 +12,10 @@ interface NavButtonProps {
 
 function NavButton({ label, href, active }: NavButtonProps) {
   return (
-    <Link href={href} className="flex-1 text-center">
+    <Link href={href} className="flex-1 text-center group">
       <span
         className={`relative inline-block py-2 text-sm font-medium transition-colors duration-300 
-          ${active ? "text-[#0b2345]" : "text-gray-500 hover:text-[#0b2345]"}`}
+          ${active ? "text-[#0b2345]" : "text-gray-500 group-hover:text-[#0b2345]"}`}
       >
         {label}
         <span
@@ -27,16 +28,21 @@ function NavButton({ label, href, active }: NavButtonProps) {
 }
 
 export default function BottomNav() {
+  const { user } = useAuth();
   const pathname = usePathname();
+  const isOffering = user?.isOfferingRides;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-20 border-t rounded-b-2xl w-full max-w-lg mx-auto h-13 flex items-center justify-around shadow-sm">
-        <>
-          {/* <NavButton label="Home" href="/home" active={pathname === "/home"} /> */}
-          <NavButton label="Offered Rides" href="/offers" active={pathname === "/offers"} />
-          <NavButton label="Ride Requests" href="/requests" active={pathname === "/requests"} />
-          <NavButton label="Profile" href="/profile" active={pathname === "/profile"} />
-        </>
+      <>
+        <NavButton
+          label={isOffering ? "Offered Rides" : "Available Rides"}
+          href={isOffering ? "/offers" : "/home"}
+          active={pathname.startsWith(isOffering ? "/offers" : "/home")}
+        />
+        <NavButton label="Ride Requests" href="/requests" active={pathname.startsWith("/requests")} />
+        <NavButton label="Profile" href="/profile" active={pathname === "/profile"} />
+      </>
     </div>
   );
 }

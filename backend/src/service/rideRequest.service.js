@@ -75,7 +75,7 @@ const getMyRideRequests = async ({ userId, loggedInUserId, filter }) => {
 };
 
 
-const getOfferedRideRequests = async ({ userId, loggedInUserId, filter }) => {
+const getOfferedRideRequests = async ({ userId, loggedInUserId, rideId }) => {
     checkUserAccess(userId, loggedInUserId);
 
     const user = await User.findById(userId);
@@ -86,31 +86,21 @@ const getOfferedRideRequests = async ({ userId, loggedInUserId, filter }) => {
         };
     }
 
-    // if (user.isOfferingRides) {
-    //     const rideIds = await RideOffer.find({ owner: userId }).distinct("_id");
+    const rideOfferExsits = await RideOffer.findById(rideId);
 
-    //     const requests = await RideRequest.find({ rideOffer: { $in: rideIds } })
-    //         .populate("passenger", "firstName lastName email")
-    //         .populate("rideOffer", "pickupLocation dropLocation rideDateTime");
-
-    //     return {
-    //         status: 200,
-    //         message: "Ride requests for your offers.",
-    //         data: [ ...requests ]
-    //     };
-    // }
-
-    if (!Object.values(RIDE_REQUEST_STATUS).includes(filter.status)) {
-        delete filter.status
+    if (!rideOfferExsits) {
+        return {
+            status: 404,
+            message: "Rdie offer does not exists. Please refresh the page.",
+        };
     }
-
-    const requests = await RideRequest.find(filter)
-        .populate("rideOffer", "pickupLocation dropLocation rideDateTime owner")
-        .populate("rideOffer.owner", "firstName lastName email mobileNumber");
+    const requests = await RideRequest.find({ rideOffer: rideId })
+        .populate("passenger", "firstName lastName email")
+        .populate("rideOffer", "pickupLocation dropLocation rideDateTime");
 
     return {
         status: 200,
-        message: "Ride requests fetched successfully.",
+        message: "Ride requests for this offer.",
         data: [...requests]
     };
 };

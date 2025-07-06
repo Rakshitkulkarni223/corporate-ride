@@ -9,12 +9,12 @@ const rideRouter = express.Router();
 
 rideRouter.post("/create", authenticateUser, checkOfferingStatus, createRide);
 rideRouter.post("/update/:id", authenticateUser, checkOfferingStatus, updateRide);
-rideRouter.get("/",authenticateUser, fetchRides); //  /api/ride?status=active
+rideRouter.get("/", fetchRides); //  /api/ride?status=active
 
 
-rideRouter.post("/request", authenticateUser, sendRideRequest);
+rideRouter.post("/request/send", authenticateUser, sendRideRequest);
 rideRouter.post("/requests", authenticateUser, getMyRequests);
-rideRouter.post("/owner/requests", authenticateUser, getOfferedRequests);
+rideRouter.post("/requests/:rideId", authenticateUser, getOfferedRequests);
 rideRouter.post("/:id/respond", authenticateUser, checkOfferingStatus, respondToRideRequest);
 
 module.exports = rideRouter;

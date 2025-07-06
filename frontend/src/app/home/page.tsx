@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { useAuth } from "../contexts/AuthContext";
+import { RIDE_OFFER_STATUS } from "../utils/constants";
 
 interface RideOffer {
     _id: string;
@@ -26,13 +27,16 @@ export default function RideOffersPage() {
     const [rides, setRides] = useState<RideOffer[]>([]);
     const [loading, setLoading] = useState(true);
     const [requesting, setRequesting] = useState<string | null>(null);
+    const [sentRequests, setSentRequests] = useState<string[]>([]);
 
     const fetchRides = async () => {
         try {
-            const response = await axiosInstance.post("/api/ride/requests", { userId: user?.id }, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const response = await axiosInstance.get(`/api/ride?status=${RIDE_OFFER_STATUS.ACTIVE}`);
             setRides(response.data.data);
+            console.log(response.data.data);
+            const rideIds = response.data?.data?.map((req: any) => req._id) || [];
+            console.log(rideIds)
+            setSentRequests(rideIds);
             setLoading(false);
         } catch (err: any) {
             if (err.response) {
@@ -45,16 +49,20 @@ export default function RideOffersPage() {
         }
     };
 
-    const handleRequest = async (rideId: string) => {
+    const sendRequest = async (rideId: string) => {
         try {
             setRequesting(rideId);
-            await axiosInstance.post("/api/ride/request", {
+            const response = await axiosInstance.post("/api/ride/request/send", {
                 rideId,
                 userId: user?.id,
                 message: "I'd like to join this ride.",
+            }, {
+                headers: { Authorization: `Bearer ${token}` },
             });
-            alert("Request sent!");
+            setSentRequests((prev) => [...prev, rideId]);
+            setRequesting(null);
         } catch (err: any) {
+            setRequesting(null);
             if (err.response) {
                 console.log("Error response:", err.response.data);
                 alert(err.response.data.message || "Something went wrong, Failed to send request.");
@@ -117,12 +125,21 @@ export default function RideOffersPage() {
                             </div>
 
                             <button
-                                onClick={() => handleRequest(ride._id)}
-                                disabled={requesting === ride._id}
-                                className="mt-2 w-full bg-[#0b2345] text-white py-1.5 rounded-md text-sm hover:bg-blue-950 transition"
+                                onClick={() => sendRequest(ride._id)}
+                                className={`mt-2 w-full py-1.5 rounded-md text-sm transition cursor-pointer 
+    ${requesting === ride._id || sentRequests.includes(ride._id)
+                                        ? "bg-gray-400 text-white cursor-not-allowed"
+                                        : "bg-[#0b2345] text-white hover:bg-blue-950"
+                                    }`}
+                                disabled={requesting === ride._id || sentRequests.includes(ride._id)}
                             >
-                                {requesting === ride._id ? "Sending..." : "Request Ride"}
+                                {requesting === ride._id
+                                    ? "Sending..."
+                                    : sentRequests.includes(ride._id)
+                                        ? "Request Sent"
+                                        : "Request Ride"}
                             </button>
+
                         </div>
                     </div>
                 ))

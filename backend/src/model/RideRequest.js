@@ -15,7 +15,7 @@ const RideRequestSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: Object.values(RIDE_REQUEST_STATUS),
-        default: "sent",
+        default: RIDE_REQUEST_STATUS.SENT,
     },
     message: {
         type: String,

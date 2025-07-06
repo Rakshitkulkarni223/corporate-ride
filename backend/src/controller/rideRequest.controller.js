@@ -24,10 +24,9 @@ const getMyRequests = async (req, res) => {
 const getOfferedRequests = async (req, res) => {
   await handleResponse(req, res, async () => {
     const { userId } = req.body;
-    const { status } = req.query;
+    const { rideId } = req.params;
     const loggedInUserId = req.userId;
-    const filter = { status, passenger: req.userId }
-    return await getOfferedRideRequests({ userId, loggedInUserId, filter });
+    return await getOfferedRideRequests({ userId, loggedInUserId, rideId });
   })
 };
 

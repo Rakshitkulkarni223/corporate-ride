@@ -72,14 +72,29 @@ const updateRideOffer = async ({
 
 const fetchRideOffers = async ({ filter }) => {
   if (!Object.values(RIDE_OFFER_STATUS).includes(filter.status)) {
-    delete filter.status
+    delete filter.status;
   }
-  const rides =  await RideOffer.find(filter).select("_id pickupLocation dropLocation rideDateTime availableSeats status");
+
+  const includeOwner = !!filter.owner;
+
+  if (!includeOwner) {
+    delete filter.owner;
+  }
+
+  const ridesQuery = RideOffer.find(filter)
+    .select("_id pickupLocation dropLocation rideDateTime availableSeats vehicle status")
+    .populate("vehicle", "model registrationNumber image")
+    .populate("owner", "firstName lastName");
+
+  const rides = await ridesQuery.exec();
+
   return {
+    status: 200,
     message: "Fetched active ride offers.",
-    data: [...rides],
+    data: [...rides]
   };
 };
+
 
 module.exports = {
   createRideOffer,

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { useAuth } from "../contexts/AuthContext";
 import ScheduleRideModal from "../Modals/ScheduleRideModal";
+import { useRouter } from "next/navigation";
 
 const filterOptions = ["Active", "Completed", "All"];
 
@@ -17,7 +18,10 @@ interface RideOfferDetails {
 }
 
 export default function MyOffersPage() {
+    const router = useRouter();
+
     const { token, user, isAuthenticated } = useAuth();
+
     const [filteredOffers, setFilteredOffers] = useState<RideOfferDetails[]>([]);
     const [filter, setFilter] = useState("Active");
     const [loading, setLoading] = useState(true);
@@ -30,7 +34,7 @@ export default function MyOffersPage() {
                 const response = await axiosInstance.get(`/api/ride?status=${filter}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
-                console.log(response.data.data)
+                console.log(response.data)
                 setFilteredOffers(response.data.data || []);
             } catch (err: any) {
                 if (err.response) {
@@ -69,6 +73,12 @@ export default function MyOffersPage() {
         }
     };
 
+
+    const handleCardClick = (rideId: string) => {
+        router.push(`/offers/${rideId}/requests`);
+    };
+
+
     return (
         <div className="max-w-lg mx-auto min-h-screen bg-[#f9fafb] space-y-4">
             <div className="sticky top-[2rem] z-20 bg-[#ebedef] border-b p-4 border-gray-200 pt-5 pb-3 space-y-3 backdrop-blur-sm">
@@ -106,7 +116,8 @@ export default function MyOffersPage() {
                     {filteredOffers.map((offer) => (
                         <div
                             key={offer._id}
-                            className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-1"
+                            onClick={() => handleCardClick(offer._id)}
+                            className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-1 cursor-pointer hover:shadow-md transition"
                         >
                             <div className="flex justify-between items-center">
                                 <div className="font-medium text-gray-900">
