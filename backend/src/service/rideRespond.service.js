@@ -1,3 +1,4 @@
+const { RIDE_REQUEST_STATUS } = require("../helpers/constants");
 const RideOffer = require("../model/RideOffer");
 const RideRequest = require("../model/RideRequest");
 const checkUserAccess = require("../utils/checkAccess");
@@ -5,7 +6,7 @@ const checkUserAccess = require("../utils/checkAccess");
 const handleRideRequest = async ({ requestId, status, userId, loggedInUserId }) => {
     checkUserAccess(userId, loggedInUserId)
 
-    if (!["accepted", "rejected"].includes(status)) {
+    if (![RIDE_REQUEST_STATUS.ACCEPTED, RIDE_REQUEST_STATUS.REJECTED].includes(status)) {
         throw {
             status: 400,
             message: "Invalid status."
@@ -28,17 +29,17 @@ const handleRideRequest = async ({ requestId, status, userId, loggedInUserId }) 
         };
     }
 
-    if (request.status !== "sent") {
+    if (request.status !== RIDE_REQUEST_STATUS.SENT) {
         throw {
             status: 400,
-            message: "Request already responded to."
+            message: "Request already responded."
         };
     }
 
     request.status = status;
     request.respondedAt = new Date();
 
-    if (status === "accepted") {
+    if (status === RIDE_REQUEST_STATUS.ACCEPTED) {
         const ride = await RideOffer.findById(request.rideOffer._id);
 
         if (ride.availableSeats <= 0) {
@@ -57,7 +58,7 @@ const handleRideRequest = async ({ requestId, status, userId, loggedInUserId }) 
     return {
         status: 200,
         message: Request `${status}`,
-        data: {...request}
+        data: {...request.toObject()}
     }
 };
 

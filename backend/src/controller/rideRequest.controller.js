@@ -23,10 +23,10 @@ const getMyRequests = async (req, res) => {
 
 const getOfferedRequests = async (req, res) => {
   await handleResponse(req, res, async () => {
-    const { userId } = req.body;
+    const { userId, status } = req.body;
     const { rideId } = req.params;
     const loggedInUserId = req.userId;
-    return await getOfferedRideRequests({ userId, loggedInUserId, rideId });
+    return await getOfferedRideRequests({ userId, loggedInUserId, rideId, status });
   })
 };
 

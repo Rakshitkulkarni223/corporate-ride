@@ -18,10 +18,18 @@ const RIDE_TYPE = Object.freeze({
   RETURN: "Return",
 });
 
+const RIDE_REQUEST_STATUS = Object.freeze({
+  SENT: "Sent",
+  ACCEPTED: "Accepted",
+  REJECTED: "Rejected"
+});
+
 export type RideType = keyof typeof RIDE_TYPE;
+export type RideRequestType = 'Accepted' | 'Rejected';
 
 export {
   CONSTANTS,
   RIDE_OFFER_STATUS,
-  RIDE_TYPE
+  RIDE_TYPE,
+  RIDE_REQUEST_STATUS
 }

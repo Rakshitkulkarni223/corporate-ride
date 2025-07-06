@@ -64,8 +64,14 @@ const getMyRideRequests = async ({ userId, loggedInUserId, filter }) => {
     }
 
     const requests = await RideRequest.find(filter)
-        .populate("rideOffer", "pickupLocation dropLocation rideDateTime owner")
-        .populate("rideOffer.owner", "firstName lastName email mobileNumber");
+        .populate({
+            path: "rideOffer",
+            select: "pickupLocation dropLocation rideDateTime owner availableSeats",
+            populate: {
+                path: "owner",
+                select: "firstName lastName email mobileNumber",
+            },
+        })
 
     return {
         status: 200,
@@ -75,7 +81,7 @@ const getMyRideRequests = async ({ userId, loggedInUserId, filter }) => {
 };
 
 
-const getOfferedRideRequests = async ({ userId, loggedInUserId, rideId }) => {
+const getOfferedRideRequests = async ({ userId, loggedInUserId, rideId, status }) => {
     checkUserAccess(userId, loggedInUserId);
 
     const user = await User.findById(userId);
@@ -94,7 +100,16 @@ const getOfferedRideRequests = async ({ userId, loggedInUserId, rideId }) => {
             message: "Rdie offer does not exists. Please refresh the page.",
         };
     }
-    const requests = await RideRequest.find({ rideOffer: rideId })
+
+    const filter = {
+        rideOffer: rideId,
+    };
+
+    if (status) {
+        filter.status = status;
+    }
+
+    const requests = await RideRequest.find(filter)
         .populate("passenger", "firstName lastName email")
         .populate("rideOffer", "pickupLocation dropLocation rideDateTime");
 

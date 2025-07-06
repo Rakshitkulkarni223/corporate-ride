@@ -84,7 +84,12 @@ const fetchRideOffers = async ({ filter }) => {
   const ridesQuery = RideOffer.find(filter)
     .select("_id pickupLocation dropLocation rideDateTime availableSeats vehicle status")
     .populate("vehicle", "model registrationNumber image")
-    .populate("owner", "firstName lastName");
+    .populate("owner", "firstName lastName")
+    .populate({
+      path: 'requests',
+      match: { passenger: req.userId },
+      select: 'status',
+    })
 
   const rides = await ridesQuery.exec();
 

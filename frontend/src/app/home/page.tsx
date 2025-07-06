@@ -20,6 +20,7 @@ interface RideOffer {
         firstName: string;
         lastName: string;
     };
+    requests?: { status: string }[];
 }
 
 export default function RideOffersPage() {
@@ -32,11 +33,24 @@ export default function RideOffersPage() {
     const fetchRides = async () => {
         try {
             const response = await axiosInstance.get(`/api/ride?status=${RIDE_OFFER_STATUS.ACTIVE}`);
-            setRides(response.data.data);
-            console.log(response.data.data);
+            const allRides = response.data.data;
             const rideIds = response.data?.data?.map((req: any) => req._id) || [];
-            console.log(rideIds)
             setSentRequests(rideIds);
+            console.log(allRides)
+            const visibleRides = allRides.filter((ride: RideOffer) => {
+                const userRequest = ride.requests?.[0];
+                return !userRequest || userRequest.status !== "Accepted";
+            });
+
+            setRides(visibleRides);
+
+            // Populate sentRequests array
+            const sent = visibleRides
+                .filter((ride: RideOffer) => ride.requests?.[0]?.status === "Sent")
+                .map((ride: RideOffer) => ride._id);
+            setSentRequests(sent);
+
+            setLoading(false);
             setLoading(false);
         } catch (err: any) {
             if (err.response) {

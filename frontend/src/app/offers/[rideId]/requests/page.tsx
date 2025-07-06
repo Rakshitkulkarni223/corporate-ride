@@ -1,51 +1,113 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import axiosInstance from "@/app/utils/axiosInstance";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { RIDE_REQUEST_STATUS, RideRequestType } from "@/app/utils/constants";
 
 export default function RideRequestsPage() {
   const { token, user } = useAuth();
   const { rideId } = useParams();
+
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<RideRequestType | 'Sent'>(RIDE_REQUEST_STATUS.SENT);
+
+  const fetchRideRequests = async () => {
+    setLoading(true);
+    try {
+      const response = await axiosInstance.post(
+        `/api/ride/requests/${rideId}`,
+        { userId: user?.id, status: filter },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setRequests(response.data.data || []);
+    } catch (err) {
+      console.error("Error fetching ride requests:", err);
+      alert("Failed to load ride requests.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const respondToRequest = async (requestId: string, action: RideRequestType) => {
+    try {
+      await axiosInstance.post(
+        `/api/ride/request/${requestId}/respond`,
+        { userId: user?.id, status: action },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Remove request after responding
+      setRequests((prev: any) => prev.filter((r: any) => r._id !== requestId));
+    } catch (err) {
+      console.error("Error responding to request:", err);
+      alert("Failed to update request status.");
+    }
+  };
 
   useEffect(() => {
-    const fetchRideRequests = async () => {
-      try {
-        const response = await axiosInstance.post(`/api/ride/requests/${rideId}`, { userId: user?.id }, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setRequests(response.data.data || []);
-      } catch (err) {
-        console.error("Error fetching ride requests:", err);
-        alert("Failed to load ride requests.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (rideId && token) {
       fetchRideRequests();
     }
-  }, [rideId, token]);
+  }, [rideId, token, filter]);
+
+  const filterOptions = [
+    { label: "Pending", value: RIDE_REQUEST_STATUS.SENT },
+    { label: "Accepted", value: RIDE_REQUEST_STATUS.ACCEPTED },
+    { label: "Rejected", value: RIDE_REQUEST_STATUS.REJECTED }
+  ];
 
   return (
     <div className="max-w-lg mx-auto p-4">
       <h1 className="text-lg font-semibold text-gray-800 mb-4">Ride Requests</h1>
 
+      {/* Filter Buttons */}
+      <div className="flex justify-center gap-2 mb-4">
+        {filterOptions.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => setFilter(opt.value)}
+            className={`px-4 py-1 text-sm rounded-full border transition-all ${
+              filter === opt.value
+                ? "bg-blue-100 text-blue-900 border-blue-300"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <p className="text-gray-500">Loading...</p>
       ) : requests.length === 0 ? (
-        <p className="text-gray-500">No requests for this ride.</p>
+        <p className="text-gray-500">No {filter.toLowerCase()} requests.</p>
       ) : (
         <div className="space-y-3">
           {requests.map((req: any) => (
-            <div key={req._id} className="border p-3 rounded-md bg-white shadow-sm">
+            <div key={req._id} className="border p-3 rounded-md bg-white shadow-sm space-y-2">
               <div className="text-sm font-medium text-gray-800">
                 {req.passenger?.firstName} {req.passenger?.lastName}
               </div>
               <div className="text-xs text-gray-500">{req.passenger?.email}</div>
+
+              {filter === RIDE_REQUEST_STATUS.SENT && (
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => respondToRequest(req._id, RIDE_REQUEST_STATUS.ACCEPTED)}
+                    className="flex-1 bg-green-700 text-white text-sm py-1 rounded hover:bg-green-900"
+                  >
+                    Accept
+                  </button>
+                  <button
+                    onClick={() => respondToRequest(req._id, RIDE_REQUEST_STATUS.REJECTED)}
+                    className="flex-1 bg-red-600 text-white text-sm py-1 rounded hover:bg-red-900"
+                  >
+                    Reject
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { useAuth } from "../contexts/AuthContext";
+import { RIDE_OFFER_STATUS } from "../utils/constants";
 
 const filterOptions = ["Sent", "Accepted", "Rejected"];
 
@@ -12,6 +13,9 @@ export default function RequestsPage() {
     const [filter, setFilter] = useState("Sent");
     const [loading, setLoading] = useState(true);
 
+    const [selectedOwner, setSelectedOwner] = useState<any | null>(null);
+    const [showModal, setShowModal] = useState(false);
+
     useEffect(() => {
         const fetchRequests = async () => {
             try {
@@ -19,6 +23,7 @@ export default function RequestsPage() {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 setFilteredRequests(response.data.data || []);
+                console.log(response.data.data)
             } catch (err: any) {
                 if (err.response) {
                     console.log("Error response:", err.response.data);
@@ -56,6 +61,25 @@ export default function RequestsPage() {
                 </div>
             </div>
 
+            {showModal && selectedOwner && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center px-4">
+                    <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm space-y-4 relative">
+                        <button
+                            onClick={() => setShowModal(false)}
+                            className="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-2xl transition"
+                        >
+                            ✕
+                        </button>
+                        <h2 className="text-lg font-semibold text-gray-800 text-center">Owner Details</h2>
+                        <div className="text-sm text-gray-700 space-y-2">
+                            <p><span className="font-medium">Name:</span> {selectedOwner.firstName} {selectedOwner.lastName}</p>
+                            <p><span className="font-medium">Email:</span> {selectedOwner.email}</p>
+                            <p><span className="font-medium">Mobile:</span> {selectedOwner.mobileNumber}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {loading ? (
                 <p className="text-center text-gray-500 mt-6">Loading requests...</p>
             ) : filteredRequests.length === 0 ? (
@@ -69,12 +93,12 @@ export default function RequestsPage() {
                         >
                             <div className="flex justify-between items-center">
                                 <div className="font-medium text-gray-900">
-                                    {offer.pickupLocation} → {offer.dropLocation}
+                                    {offer.rideOffer.pickupLocation} → {offer.rideOffer.dropLocation}
                                 </div>
                                 <span
-                                    className={`text-xs px-2 py-0.5 rounded-full capitalize ${offer.status === "active"
+                                    className={`text-xs px-2 py-0.5 rounded-full capitalize ${offer.status === RIDE_OFFER_STATUS.ACTIVE
                                         ? "bg-green-100 text-green-700"
-                                        : offer.status === "completed"
+                                        : offer.status === RIDE_OFFER_STATUS.COMPLETED
                                             ? "bg-gray-200 text-gray-600"
                                             : "bg-yellow-100 text-yellow-700"
                                         }`}
@@ -83,9 +107,19 @@ export default function RequestsPage() {
                                 </span>
                             </div>
                             <div className="text-sm text-gray-600">
-                                {new Date(offer.rideDateTime).toLocaleString()}
+                                {new Date(offer.rideOffer.rideDateTime).toLocaleString()}
                             </div>
-                            <div className="text-sm text-gray-500">Seats: {offer.availableSeats}</div>
+                            <div className="text-sm text-gray-500">Seats: {offer.rideOffer.availableSeats}</div>
+                            <button
+                                onClick={() => {
+                                    setSelectedOwner(offer.rideOffer.owner);
+                                    setShowModal(true);
+                                }}
+                                className="mt-2 w-full bg-blue-100 text-blue-900 py-1.5 rounded-md text-sm hover:bg-blue-200 transition"
+                            >
+                                View Owner Details
+                            </button>
+
                         </div>
                     ))}
                 </div>

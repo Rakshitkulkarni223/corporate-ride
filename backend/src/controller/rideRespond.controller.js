@@ -1,4 +1,5 @@
 const { handleRideRequest } = require("../service/rideRespond.service");
+const handleResponse = require("../utils/handleResponse");
 
 const respondToRideRequest = async (req, res) => {
     await handleResponse(req, res, async () => {
