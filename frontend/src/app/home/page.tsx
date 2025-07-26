@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { useAuth } from "../contexts/AuthContext";
 import { RIDE_OFFER_STATUS } from "../utils/constants";
+import { useRouter } from "next/navigation";
 
 interface RideOffer {
     _id: string;
@@ -24,6 +25,7 @@ interface RideOffer {
 }
 
 export default function RideOffersPage() {
+    const router = useRouter();
     const { user, token, isAuthenticated } = useAuth();
     const [rides, setRides] = useState<RideOffer[]>([]);
     const [loading, setLoading] = useState(true);
@@ -89,6 +91,8 @@ export default function RideOffersPage() {
     useEffect(() => {
         if (isAuthenticated) {
             fetchRides();
+        }else{
+            router.replace('/login');
         }
     }, [token]);
 

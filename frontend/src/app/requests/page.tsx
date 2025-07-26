@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { useAuth } from "../contexts/AuthContext";
 import { RIDE_OFFER_STATUS } from "../utils/constants";
+import { useRouter } from "next/navigation";
 
 const filterOptions = ["Sent", "Accepted", "Rejected"];
 
 export default function RequestsPage() {
+    const router = useRouter();
     const { token, user, isAuthenticated } = useAuth();
     const [filteredRequests, setFilteredRequests] = useState<any[]>([]);
     const [filter, setFilter] = useState("Sent");
@@ -38,6 +40,8 @@ export default function RequestsPage() {
         };
         if (isAuthenticated) {
             fetchRequests();
+        }else{
+            router.replace('/login');
         }
     }, [isAuthenticated, token, filter]);
 

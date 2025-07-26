@@ -5,8 +5,10 @@ import { useAuth } from "../contexts/AuthContext";
 import axiosInstance from "../utils/axiosInstance";
 import VehicleModal from "../Modals/VehicleModal";
 import { RiPencilLine } from "react-icons/ri";
+import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
+    const router = useRouter();
     const { user: authUser, token, isAuthenticated, updateUser } = useAuth();
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -45,6 +47,8 @@ export default function ProfilePage() {
 
         if (isAuthenticated) {
             fetchUserProfile();
+        }else{
+            router.replace('/login');
         }
     }, [isAuthenticated]);
 
