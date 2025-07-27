@@ -211,6 +211,7 @@ const fetchRideOffers = async ({ filter }) => {
       const allRides = await RideOffer.find({
         status: RIDE_OFFER_STATUS.ACTIVE,
         owner: { $ne: userId },
+        rideDateTime: { $gte: new Date() },
         _id: { $nin: [...allRequestedRideIds] }
       })
         .select("_id pickupLocation dropLocation rideDateTime availableSeats vehicle status")
