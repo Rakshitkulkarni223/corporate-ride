@@ -13,6 +13,8 @@ export default function VehicleModal({
     const [number, setNumber] = useState(vehicle?.number || "");
     const [image, setImage] = useState<File | null>(null);
 
+    const isNotEditing = !!vehicle;
+
     const vehicleNumberRegex = /^[A-Z]{2}\d{2}[A-Z]{1,2}\d{4}$/;
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,39 +25,20 @@ export default function VehicleModal({
     };
 
     const handleSubmit = (e: any) => {
-        try {
-            e.preventDefault();
-            if (!model || !number) {
-                alert("Model and number are required");
-                return;
-            }
-            if (!vehicleNumberRegex.test(number.trim().toUpperCase())) {
-                alert("Invalid vehicle registration number. Format: KA01AB1234");
-                return;
-            }
-            
-            // Only require image for new vehicle creation, not for updates
-            if (!vehicle && !image) {
-                alert("Image is required for new vehicles");
-                return;
-            }
-            
-            // Create data object with model and number
-            const data: { model: string; number: string; image?: File } = {
-                model: model.trim(),
-                number: number.trim().toUpperCase(),
-            };
-            
-            // Only add image to data if a new one is selected
-            if (image) {
-                data.image = image;
-            }
-            
-            onSave(data);
-        } catch (error) {
-            console.error("Error in handleSubmit:", error);
-            alert("An error occurred while submitting the form");
+        e.preventDefault();
+        if (!model || !number) {
+            alert("Model and number are required");
+            return;
         }
+        if (!vehicleNumberRegex.test(number.trim().toUpperCase())) {
+            alert("Invalid vehicle registration number. Format: KA01AB1234");
+            return;
+        }
+        if (!image && !isNotEditing) {
+            alert("Image is required");
+            return;
+        }
+        onSave({ model, number, image });
     };
 
     return (
@@ -86,7 +69,7 @@ export default function VehicleModal({
                     <div>
                         <label className="text-sm font-medium block mb-1">Upload Image</label>
                         <input
-                            required
+                            required={!isNotEditing}
                             type="file"
                             accept="image/*"
                             className="block w-full text-sm text-gray-700 file:mr-4 file:py-1.5 file:px-4 

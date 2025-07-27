@@ -191,65 +191,54 @@ export default function ProfilePage() {
 
 
     const handleToggleRideOffer = async () => {
+        const newValue = !user.isOfferingRides;
         try {
-            const newValue = !user.isOfferingRides;
-            try {
-                const response = await axiosInstance.put(
-                    `/api/user/toggle-offering/${authUser?.id}`,
-                    { isOfferingRides: newValue },
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
+            const response = await axiosInstance.put(
+                `/api/user/toggle-offering/${authUser?.id}`,
+                { isOfferingRides: newValue },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
 
-                setUser((prev: any) => ({ ...prev, isOfferingRides: newValue }));
-                updateUser({ isOfferingRides: newValue });
-                setIsOfferingRides(newValue);
-                await fetchVehicleDetails(newValue);
-            } catch (err: any) {
-                if (err.response) {
-                    console.log("Error response:", err.response.data);
-                    alert(err.response.data.message || "Something went wrong, Failed to toggle ride offering");
-                } else {
-                    console.log("Network or other error:", err.message);
-                    alert("Network error or server not reachable");
-                }
+            setUser((prev: any) => ({ ...prev, isOfferingRides: newValue }));
+            updateUser({ isOfferingRides: newValue });
+            setIsOfferingRides(newValue);
+            await fetchVehicleDetails(newValue);
+        } catch (err: any) {
+            if (err.response) {
+                console.log("Error response:", err.response.data);
+                alert(err.response.data.message || "Something went wrong, Failed to toggle ride offering");
+            } else {
+                console.log("Network or other error:", err.message);
+                alert("Network error or server not reachable");
             }
-        } catch (error) {
-            console.error("Error in handleToggleRideOffer:", error);
-            alert("An unexpected error occurred while updating ride offering status");
         }
     };
 
     const handleSaveVehicle = async (data: any) => {
         try {
-            try {
-                debugger
-                if(isVehicleEdit){
-                    const response = await axiosInstance.post(`/api/vehicle/update/${vehicle._id}`, {
-                        model: data.model,
-                        number: data.number,
-                    }, {
-                        headers: { Authorization: `Bearer ${token}`},
-                    });
-                }else{
-                    const response = await axiosInstance.post("/api/vehicle/create", data, {
-                        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
-                    });
-                    await handleToggleRideOffer();
-                }
-                await fetchVehicleDetails(true);
-                setShowModal(false);
-            } catch (err: any) {
-                if (err.response) {
-                    console.log("Error response:", err.response.data);
-                    alert(err.response.data.message || "Something went wrong, Failed to save vehicle");
-                } else {
-                    console.log("Network or other error:", err.message);
-                    alert("Network error or server not reachable");
-                }
+            if (isVehicleEdit) {
+                const response = await axiosInstance.post(`/api/vehicle/update/${vehicle._id}`, {
+                    model: data.model,
+                    number: data.number
+                }, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+            } else {
+                const response = await axiosInstance.post("/api/vehicle/create", data, {
+                    headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
+                });
+                await handleToggleRideOffer();
             }
-        } catch (error) {
-            console.error("Error in handleSaveVehicle:", error);
-            alert("An unexpected error occurred while saving vehicle details");
+            await fetchVehicleDetails(true);
+            setShowModal(false);
+        } catch (err: any) {
+            if (err.response) {
+                console.log("Error response:", err.response.data);
+                alert(err.response.data.message || "Something went wrong, Failed to save vehicle");
+            } else {
+                console.log("Network or other error:", err.message);
+                alert("Network error or server not reachable");
+            }
         }
     };
 
