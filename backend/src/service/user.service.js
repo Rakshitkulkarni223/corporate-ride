@@ -154,30 +154,56 @@ const updateAvatarService = async ({ userId, files, loggedInUserId }) => {
   }
 };
 
-const updateUserDetails = async ({ userId, files, body, loggedInUserId }) => {
-  checkUserAccess(userId, loggedInUserId)
-
-  const existingUser = await User.findById(userId);
-  if (!existingUser) {
-    throw {
-      status: 404,
-      message: "User not found.",
-    };
-  }
-
+const updateUserDetails = async ({ userId, body, loggedInUserId }) => {
   try {
-    const profileUpdates = {
-      ...(body.age && { age: body.age }),
-      ...(body.gender && { gender: body.gender }),
-      ...(body.homeAddress && { homeAddress: body.homeAddress }),
-      ...(body.officeAddress && { officeAddress: body.officeAddress }),
-    };
+    await checkUserAccess(userId, loggedInUserId);
 
-    const userUpdates = {
-      ...(body.firstName && { firstName: body.firstName }),
-      ...(body.lastName && { lastName: body.lastName }),
-      ...(Object.keys(profileUpdates).length && { profile: profileUpdates }),
-    };
+    const existingUser = await User.findById(userId);
+    if (!existingUser) {
+      throw {
+        status: 404,
+        message: "User not found.",
+      };
+    }
+
+    const profileUpdates = {};
+    try {
+      if (body.profile) {
+        if ('age' in body.profile) profileUpdates.age = body.profile.age;
+        if ('gender' in body.profile) profileUpdates.gender = body.profile.gender;
+        if ('homeAddress' in body.profile) profileUpdates.homeAddress = body.profile.homeAddress;
+        if ('officeAddress' in body.profile) profileUpdates.officeAddress = body.profile.officeAddress;
+      }
+      
+      if ('age' in body) profileUpdates.age = body.age;
+      if ('gender' in body) profileUpdates.gender = body.gender;
+      if ('homeAddress' in body) profileUpdates.homeAddress = body.homeAddress;
+      if ('officeAddress' in body) profileUpdates.officeAddress = body.officeAddress;
+    } catch (error) {
+      throw error.status ? error : {
+        status: 500,
+        message: `Error processing profile updates. ${error.message}`
+      };
+    }
+
+    const userUpdates = {};
+    try {
+      if ('firstName' in body) userUpdates.firstName = body.firstName;
+      if ('lastName' in body) userUpdates.lastName = body.lastName;
+      
+      if (Object.keys(profileUpdates).length > 0) {
+        if (existingUser.profile) {
+          userUpdates['profile'] = { ...existingUser.profile.toObject(), ...profileUpdates };
+        } else {
+          userUpdates['profile'] = profileUpdates;
+        }
+      }
+    } catch (error) {
+      throw error.status ? error : {
+        status: 500,
+        message: `Error processing user updates. ${error.message}`
+      };
+    }
 
     await User.updateOne({ _id: userId }, { $set: userUpdates });
 
@@ -186,12 +212,10 @@ const updateUserDetails = async ({ userId, files, body, loggedInUserId }) => {
       message: "Profile updated successfully",
       data: userUpdates,
     };
-  } catch (err) {
-    console.error("Profile update failed. Cleaning up uploaded files...", err);
-
-    throw {
+  } catch (error) {
+    throw error.status ? error : {
       status: 500,
-      message: "Failed to update profile",
+      message: `Failed to update profile. ${error.message}`
     };
   }
 };

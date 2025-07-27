@@ -67,10 +67,10 @@ const updateAvatar = async (req, res) => {
 
 const updateUserProfile = async (req, res) => {
     await handleResponse(req, res, async () => {
-        const { body, files } = req;
-        const userId = params.id;
+        const { body } = req;
+        const userId = req.params.id;
         const loggedInUserId = req.userId;
-        return await updateUserDetails({ userId, files, body, loggedInUserId });
+        return await updateUserDetails({ userId, body, loggedInUserId });
     });
 };
 

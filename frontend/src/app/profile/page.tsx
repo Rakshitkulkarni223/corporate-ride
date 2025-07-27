@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import axiosInstance from "../utils/axiosInstance";
 import VehicleModal from "../Modals/VehicleModal";
-import { RiPencilLine } from "react-icons/ri";
+import { RiPencilLine, RiUser3Line, RiLogoutBoxLine, RiSaveLine, RiCloseLine } from "react-icons/ri";
 import { useRouter } from "next/navigation";
 import AvatarUploadModal from "../Modals/AvatarUploadModal";
 
@@ -20,7 +20,80 @@ export default function ProfilePage() {
     const [vehicle, setVehicle] = useState<any>(null);
 
     const [isOfferingRides, setIsOfferingRides] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [profileFields, setProfileFields] = useState({
+        age: "",
+        gender: "",
+        homeAddress: "",
+        officeAddress: ""
+    });
+    const [isSaving, setIsSaving] = useState(false);
 
+    // Function to initialize editing state with current profile values
+    const startEditing = () => {
+        try {
+            setProfileFields({
+                age: user?.profile?.age?.toString() || "",
+                gender: user?.profile?.gender || "",
+                homeAddress: user?.profile?.homeAddress || "",
+                officeAddress: user?.profile?.officeAddress || ""
+            });
+            setIsEditing(true);
+        } catch (error) {
+            console.error("Error initializing edit form:", error);
+        }
+    };
+
+    // Function to handle input changes
+    const handleInputChange = (field: string, value: string) => {
+        try {
+            setProfileFields(prev => ({
+                ...prev,
+                [field]: value
+            }));
+        } catch (error) {
+            console.error(`Error updating ${field}:`, error);
+        }
+    };
+
+    // Function to save updated profile
+    const saveProfileChanges = async () => {
+        try {
+            setIsSaving(true);
+            
+            try {
+                // Prepare profile update data
+                const updateData = {
+                    profile: {
+                        age: profileFields.age ? parseInt(profileFields.age) : undefined,
+                        gender: profileFields.gender,
+                        homeAddress: profileFields.homeAddress,
+                        officeAddress: profileFields.officeAddress
+                    }
+                };
+                
+                // Call API to update profile
+                await axiosInstance.put(`/api/user/update/${authUser?.id}`, updateData, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                
+                // Refresh user data
+                await fetchUserProfile();
+                
+                // Exit edit mode
+                setIsEditing(false);
+            } catch (err: any) {
+                console.error("Error updating profile:", err);
+                alert(err.response?.data?.message || "Failed to update profile");
+            } finally {
+                setIsSaving(false);
+            }
+        } catch (error) {
+            console.error("Error in saveProfileChanges:", error);
+            setIsSaving(false);
+        }
+    };
+    
     const fetchUserProfile = async () => {
         try {
             try {
@@ -220,28 +293,152 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="bg-white rounded-xl shadow-sm p-4 space-y-2 text-sm text-gray-800">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center mb-2">
                         <div className="font-medium text-base">Personal Details</div>
-                        <button
-                            onClick={() => alert("Open edit modal for personal details")}
-                            className="text-gray-500 hover:text-blue-600 transition"
-                            title="Edit"
-                        >
-                            <RiPencilLine className="text-lg" />
-                        </button>
+                        {!isEditing ? (
+                            <button
+                                onClick={() => {
+                                    try {
+                                        startEditing();
+                                    } catch (error) {
+                                        console.error("Error starting edit mode:", error);
+                                    }
+                                }}
+                                className="text-gray-500 hover:text-blue-600 transition"
+                                title="Edit"
+                            >
+                                <RiPencilLine className="text-lg" />
+                            </button>
+                        ) : (
+                            <div className="flex space-x-2">
+                                <button
+                                    onClick={() => {
+                                        try {
+                                            setIsEditing(false);
+                                        } catch (error) {
+                                            console.error("Error canceling edit:", error);
+                                        }
+                                    }}
+                                    className="text-gray-500 hover:text-red-500 transition"
+                                    title="Cancel"
+                                    disabled={isSaving}
+                                >
+                                    <RiCloseLine className="text-lg" />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        try {
+                                            saveProfileChanges();
+                                        } catch (error) {
+                                            console.error("Error saving profile:", error);
+                                        }
+                                    }}
+                                    className="text-gray-500 hover:text-green-600 transition"
+                                    title="Save"
+                                    disabled={isSaving}
+                                >
+                                    {isSaving ? (
+                                        <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    ) : (
+                                        <RiSaveLine className="text-lg" />
+                                    )}
+                                </button>
+                            </div>
+                        )}
                     </div>
-                    <div>
-                        <strong>Age:</strong> {user?.profile?.age || "-"}
-                    </div>
-                    <div>
-                        <strong>Gender:</strong> {user?.profile?.gender || "-"}
-                    </div>
-                    <div>
-                        <strong>Home:</strong> {user?.profile?.homeAddress || "-"}
-                    </div>
-                    <div>
-                        <strong>Office:</strong> {user?.profile?.officeAddress || "-"}
-                    </div>
+                    
+                    {!isEditing ? (
+                        // View mode
+                        <>
+                            <div>
+                                <strong>Age:</strong> {user?.profile?.age || "-"}
+                            </div>
+                            <div>
+                                <strong>Gender:</strong> {user?.profile?.gender || "-"}
+                            </div>
+                            <div>
+                                <strong>Home:</strong> {user?.profile?.homeAddress || "-"}
+                            </div>
+                            <div>
+                                <strong>Office:</strong> {user?.profile?.officeAddress || "-"}
+                            </div>
+                        </>
+                    ) : (
+                        // Edit mode
+                        <div className="space-y-3 py-1">
+                            <div>
+                                <label className="block text-xs text-gray-500 mb-1">Age</label>
+                                <input 
+                                    type="number" 
+                                    value={profileFields.age} 
+                                    onChange={(e) => {
+                                        try {
+                                            handleInputChange('age', e.target.value);
+                                        } catch (error) {
+                                            console.error("Error updating age:", error);
+                                        }
+                                    }}
+                                    className="w-full p-2 border border-gray-200 rounded text-sm focus:border-blue-400 focus:outline-none"
+                                    disabled={isSaving}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-gray-500 mb-1">Gender</label>
+                                <select 
+                                    value={profileFields.gender} 
+                                    onChange={(e) => {
+                                        try {
+                                            handleInputChange('gender', e.target.value);
+                                        } catch (error) {
+                                            console.error("Error updating gender:", error);
+                                        }
+                                    }}
+                                    className="w-full p-2 border border-gray-200 rounded text-sm focus:border-blue-400 focus:outline-none"
+                                    disabled={isSaving}
+                                >
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-gray-500 mb-1">Home Address</label>
+                                <input 
+                                    type="text" 
+                                    value={profileFields.homeAddress} 
+                                    onChange={(e) => {
+                                        try {
+                                            handleInputChange('homeAddress', e.target.value);
+                                        } catch (error) {
+                                            console.error("Error updating home address:", error);
+                                        }
+                                    }}
+                                    className="w-full p-2 border border-gray-200 rounded text-sm focus:border-blue-400 focus:outline-none"
+                                    disabled={isSaving}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-gray-500 mb-1">Office Address</label>
+                                <input 
+                                    type="text" 
+                                    value={profileFields.officeAddress} 
+                                    onChange={(e) => {
+                                        try {
+                                            handleInputChange('officeAddress', e.target.value);
+                                        } catch (error) {
+                                            console.error("Error updating office address:", error);
+                                        }
+                                    }}
+                                    className="w-full p-2 border border-gray-200 rounded text-sm focus:border-blue-400 focus:outline-none"
+                                    disabled={isSaving}
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {vehicle && (
