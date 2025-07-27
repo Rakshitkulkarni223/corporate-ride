@@ -6,6 +6,7 @@ import axiosInstance from "../utils/axiosInstance";
 import VehicleModal from "../Modals/VehicleModal";
 import { RiPencilLine } from "react-icons/ri";
 import { useRouter } from "next/navigation";
+import AvatarUploadModal from "../Modals/AvatarUploadModal";
 
 export default function ProfilePage() {
     const router = useRouter();
@@ -13,50 +14,52 @@ export default function ProfilePage() {
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [showAvatarModal, setShowAvatarModal] = useState(false);
+    const [showEditProfileModal, setShowEditProfileModal] = useState(false);
     const [isVehicleExisst, setIsVehicleExisst] = useState(false);
     const [vehicle, setVehicle] = useState<any>(null);
 
     const [isOfferingRides, setIsOfferingRides] = useState(false);
 
-    useEffect(() => {
-        const fetchUserProfile = async () => {
+    const fetchUserProfile = async () => {
+        try {
             try {
-                try {
-                    const response = await axiosInstance.get(`/api/user/profile/${authUser?.id}`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    const data = response.data.data;
-                    setUser(data);
-                    if (data.vehicle) {
-                        setIsVehicleExisst(true);
-                    }
-                    setIsOfferingRides(data.isOfferingRides)
-                    updateUser({ isOfferingRides: data.isOfferingRides });
-                } catch (err: any) {
-                    // Check if it's an authentication error
-                    if (err.response?.status === 401 || err.response?.status === 403) {
-                        console.log('Session expired, redirecting to login');
-                        logout();
-                        router.replace('/login');
-                        return;
-                    }
-
-                    if (err.response) {
-                        console.log("Error response:", err.response.data);
-                        alert(err.response.data.message || "Something went wrong, Failed to load profile");
-                    } else {
-                        console.log("Network or other error:", err.message);
-                        alert("Network error or server not reachable");
-                    }
+                const response = await axiosInstance.get(`/api/user/profile/${authUser?.id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = response.data.data;
+                setUser(data);
+                if (data.vehicle) {
+                    setIsVehicleExisst(true);
                 }
-            } catch (error) {
-                console.error("Error in fetchUserProfile:", error);
-                alert("An unexpected error occurred");
-            } finally {
-                setLoading(false);
-            }
-        };
+                setIsOfferingRides(data.isOfferingRides)
+                updateUser({ isOfferingRides: data.isOfferingRides });
+            } catch (err: any) {
+                // Check if it's an authentication error
+                if (err.response?.status === 401 || err.response?.status === 403) {
+                    console.log('Session expired, redirecting to login');
+                    logout();
+                    router.replace('/login');
+                    return;
+                }
 
+                if (err.response) {
+                    console.log("Error response:", err.response.data);
+                    alert(err.response.data.message || "Something went wrong, Failed to load profile");
+                } else {
+                    console.log("Network or other error:", err.message);
+                    alert("Network error or server not reachable");
+                }
+            }
+        } catch (error) {
+            console.error("Error in fetchUserProfile:", error);
+            alert("An unexpected error occurred");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         if (isAuthenticated) {
             fetchUserProfile();
         } else if (!token) {
@@ -173,12 +176,20 @@ export default function ProfilePage() {
                 <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-4">
                     {user?.profile?.avatar ? (
                         <img
-                            src={`/files/${user?.profile?.avatar}`}
+                            src={`${process.env.NEXT_PUBLIC_API_URL}/api/image/files/${user?.profile?.avatar}`}
                             alt="avatar"
-                            className="w-16 h-16 rounded-full object-cover border"
+                            className="w-16 h-16 rounded-full object-cover border cursor-pointer"
+                            onClick={() => {
+                                setShowAvatarModal(true);
+                            }}
                         />
                     ) : (
-                        <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
+                        <div
+                            className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs cursor-pointer"
+                            onClick={() => {
+                                setShowAvatarModal(true);
+                            }}
+                        >
                             No Avatar
                         </div>
                     )}
@@ -308,7 +319,19 @@ export default function ProfilePage() {
                     </div>
                 )}
 
-
+                {showAvatarModal && (
+                    <AvatarUploadModal
+                        onClose={() => {
+                            setShowAvatarModal(false);
+                        }}
+                        onSuccess={async () => {
+                            await fetchUserProfile();
+                            setShowAvatarModal(false);
+                        }}
+                        userId={authUser?.id}
+                        token={token}
+                    />
+                )}
                 {showModal && (
                     <VehicleModal
                         onClose={() => {
@@ -319,31 +342,6 @@ export default function ProfilePage() {
                 )}
             </>
         }
-        return <div className="p-6 max-w-lg mx-auto mt-10 bg-white rounded-xl shadow-md">
-            <div className="flex flex-col items-center space-y-4">
-                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938-9h13.856c1.54 0 2.502 1.667 1.732 3L13.732 19c-.77 1.333-2.694 1.333-3.464 0L3.34 7c-.77-1.333.192-3 1.732-3z" />
-                    </svg>
-                </div>
-                <h3 className="text-xl font-medium text-gray-900">Profile Not Found</h3>
-                <p className="text-center text-gray-500">We couldn't load your profile information. This could be due to a temporary issue or your profile might need to be set up.</p>
-                <div className="flex gap-3">
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-                    >
-                        Retry
-                    </button>
-                    <button
-                        onClick={() => router.push('/home')}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
-                    >
-                        Go to Home
-                    </button>
-                </div>
-            </div>
-        </div>
     }
 
     if (loading) {

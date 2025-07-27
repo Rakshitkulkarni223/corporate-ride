@@ -47,6 +47,7 @@ const loginUserService = async ({ mobileNumber, password }) => {
             id: user._id,
             vehicleId: vehicle?.id || null,
             isOfferingRides: user.isOfferingRides,
+            documentsUploaded: (user?.profile?.officeIdCardUrl && user?.profile?.personalIdCardUrl),
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,

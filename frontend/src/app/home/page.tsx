@@ -5,6 +5,7 @@ import axiosInstance from "../utils/axiosInstance";
 import { useAuth } from "../contexts/AuthContext";
 import { RIDE_OFFER_STATUS } from "../utils/constants";
 import { useRouter } from "next/navigation";
+import DocumentUploadModal from "../Modals/DocumentUploadModal";
 
 interface RideOffer {
     _id: string;
@@ -26,11 +27,12 @@ interface RideOffer {
 
 export default function RideOffersPage() {
     const router = useRouter();
-    const { user, token, isAuthenticated, logout } = useAuth();
+    const { user, token, isAuthenticated, logout, updateUser } = useAuth();
     const [rides, setRides] = useState<RideOffer[]>([]);
     const [loading, setLoading] = useState(true);
     const [requesting, setRequesting] = useState<string | null>(null);
     const [sentRequests, setSentRequests] = useState<string[]>([]);
+    const [showDocumentModal, setShowDocumentModal] = useState(false);
 
     const fetchRides = async () => {
         try {
@@ -105,6 +107,11 @@ export default function RideOffersPage() {
 
     const sendRequest = async (rideId: string) => {
         try {
+            if (!user?.documentsUploaded) {
+                alert("Please upload office ID card and personal ID card");
+                setShowDocumentModal(true);
+                return;
+            }
             setRequesting(rideId);
 
             // Check if token exists before making authenticated request
@@ -245,6 +252,18 @@ export default function RideOffersPage() {
                         </div>
                     </div>
                 ))
+            )}
+
+            {showDocumentModal && (
+                <DocumentUploadModal
+                    onClose={() => setShowDocumentModal(false)}
+                    onSuccess={() => {
+                        setShowDocumentModal(false);
+                        updateUser({ documentsUploaded: true })
+                    }}
+                    userId={user?.id}
+                    token={token}
+                />
             )}
         </div>
     );

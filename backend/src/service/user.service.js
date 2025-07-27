@@ -51,8 +51,59 @@ const toggleOfferingStatusService = async ({ userId, loggedInUserId }) => {
   };
 }
 
+const uploadDocumentsService = async ({ userId, files, loggedInUserId }) => {
+  checkUserAccess(userId, loggedInUserId);
 
-const updateUserDetails = async ({ userId, files, body, loggedInUserId }) => {
+  const existingUser = await User.findById(userId);
+  if (!existingUser) {
+    throw {
+      status: 404,
+      message: "User not found.",
+    };
+  }
+
+  const bucket = getBucket();
+  const mobileNumber = existingUser.mobileNumber || "temp";
+  const fields = ["officeIdCardUrl", "personalIdCardUrl"];
+
+  const { uploadedFiles, uploadedFileIds } = await postImageUpload(files, fields, mobileNumber);
+
+  try {
+    const profileUpdates = {
+      ...(uploadedFiles.officeIdCardUrl && { officeIdCardUrl: uploadedFiles.officeIdCardUrl }),
+      ...(uploadedFiles.personalIdCardUrl && { personalIdCardUrl: uploadedFiles.personalIdCardUrl }),
+    };
+
+    const userUpdates = {
+      ...(Object.keys(profileUpdates).length && { profile: profileUpdates }),
+    };
+
+    await User.updateOne({ _id: userId }, { $set: userUpdates });
+
+    return {
+      status: 200,
+      message: "Documents uploaded successfully",
+      data: userUpdates,
+    };
+  } catch (err) {
+    console.error("Documents upload failed. Cleaning up uploaded files...", err);
+
+    for (const fileId of uploadedFileIds) {
+      try {
+        await bucket.delete(fileId);
+      } catch (error) {
+        console.error(`Failed to delete file with id ${fileId}`, error);
+      }
+    }
+
+    throw {
+      status: 500,
+      message: "Failed to upload documents",
+    };
+  }
+};
+
+const updateAvatarService = async ({ userId, files, loggedInUserId }) => {
   checkUserAccess(userId, loggedInUserId)
 
   const existingUser = await User.findById(userId);
@@ -65,15 +116,57 @@ const updateUserDetails = async ({ userId, files, body, loggedInUserId }) => {
 
   const bucket = getBucket();
   const mobileNumber = existingUser.mobileNumber || "temp";
-  const fields = ["avatar", "officeIdCardUrl", "personalIdCardUrl"];
+  const fields = ["avatar"];
 
   const { uploadedFiles, uploadedFileIds } = await postImageUpload(files, fields, mobileNumber);
 
   try {
     const profileUpdates = {
       ...(uploadedFiles.avatar && { avatar: uploadedFiles.avatar }),
-      ...(uploadedFiles.officeIdCardUrl && { officeIdCardUrl: uploadedFiles.officeIdCardUrl }),
-      ...(uploadedFiles.personalIdCardUrl && { personalIdCardUrl: uploadedFiles.personalIdCardUrl }),
+    };
+
+    const userUpdates = {
+      ...(Object.keys(profileUpdates).length && { profile: profileUpdates }),
+    };
+
+    await User.updateOne({ _id: userId }, { $set: userUpdates });
+
+    return {
+      status: 200,
+      message: "Avatar updated successfully",
+      data: userUpdates,
+    };
+  } catch (err) {
+    console.error("Avatar update failed. Cleaning up uploaded files...", err);
+
+    for (const fileId of uploadedFileIds) {
+      try {
+        await bucket.delete(fileId);
+      } catch (error) {
+        console.error(`Failed to delete file with id ${fileId}`, error);
+      }
+    }
+
+    throw {
+      status: 500,
+      message: "Failed to update avatar",
+    };
+  }
+};
+
+const updateUserDetails = async ({ userId, files, body, loggedInUserId }) => {
+  checkUserAccess(userId, loggedInUserId)
+
+  const existingUser = await User.findById(userId);
+  if (!existingUser) {
+    throw {
+      status: 404,
+      message: "User not found.",
+    };
+  }
+
+  try {
+    const profileUpdates = {
       ...(body.age && { age: body.age }),
       ...(body.gender && { gender: body.gender }),
       ...(body.homeAddress && { homeAddress: body.homeAddress }),
@@ -95,14 +188,6 @@ const updateUserDetails = async ({ userId, files, body, loggedInUserId }) => {
     };
   } catch (err) {
     console.error("Profile update failed. Cleaning up uploaded files...", err);
-
-    for (const fileId of uploadedFileIds) {
-      try {
-        await bucket.delete(fileId);
-      } catch (delErr) {
-        console.error(`Failed to delete file with id ${fileId}`, delErr);
-      }
-    }
 
     throw {
       status: 500,
@@ -174,4 +259,4 @@ const getUserProfileDetails = async ({ userId, loggedInUserId }) => {
 
 }
 
-module.exports = { saveUserDetails, updateUserDetails, getUserDetails, getUserProfileDetails, toggleOfferingStatusService };
+module.exports = { saveUserDetails, updateUserDetails, getUserDetails, getUserProfileDetails, toggleOfferingStatusService, uploadDocumentsService, updateAvatarService };

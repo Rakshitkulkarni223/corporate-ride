@@ -47,6 +47,7 @@ const refreshToken = async (req, res) => {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 isOfferingRides: user.isOfferingRides,
+                documentsUploaded: (user?.profile?.officeIdCardUrl && user?.profile?.personalIdCardUrl),
                 email: user.email,
                 mobileNumber: user.mobileNumber,
                 token: tokenObj.token,

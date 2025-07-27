@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import { useAuth } from "../contexts/AuthContext";
 import ScheduleRideModal from "../Modals/ScheduleRideModal";
+import DocumentUploadModal from "../Modals/DocumentUploadModal";
 import { useRouter } from "next/navigation";
 
 const filterOptions = ["Active", "Completed", "All"];
@@ -20,13 +21,14 @@ interface RideOfferDetails {
 export default function MyOffersPage() {
     const router = useRouter();
 
-    const { token, user, isAuthenticated, logout } = useAuth();
+    const { token, user, isAuthenticated, updateUser } = useAuth();
 
     const [filteredOffers, setFilteredOffers] = useState<RideOfferDetails[]>([]);
     const [status, setStatus] = useState("Active");
     const [loading, setLoading] = useState(true);
 
     const [showModal, setShowModal] = useState(false);
+    const [showDocumentModal, setShowDocumentModal] = useState(false);
 
     const fetchOffers = async () => {
         try {
@@ -51,7 +53,19 @@ export default function MyOffersPage() {
         }
     }, [isAuthenticated, token, status]);
 
-    const handleCreateOffer = () => setShowModal(true);
+    const handleCreateOffer = async () => {
+        try {
+            if (!user?.documentsUploaded) {
+                alert("Please upload office ID card and personal ID card");
+                setShowDocumentModal(true);
+                return;
+            }
+            setShowModal(true);
+        } catch (error) {
+            console.error("Error in handleCreateOffer:", error);
+            alert("Something went wrong. Please try again.");
+        }
+    }
 
     const handleSubmitRide = async (formData: any) => {
         try {
@@ -161,6 +175,18 @@ export default function MyOffersPage() {
                 <ScheduleRideModal
                     onClose={() => setShowModal(false)}
                     onSubmit={handleSubmitRide}
+                />
+            )}
+            {showDocumentModal && user?.id && token && (
+                <DocumentUploadModal
+                    onClose={() => setShowDocumentModal(false)}
+                    onSuccess={() => {
+                        setShowDocumentModal(false);
+                        updateUser({documentsUploaded: true})
+                        setShowModal(true); // Show schedule modal after document upload
+                    }}
+                    userId={user.id}
+                    token={token}
                 />
             )}
         </div>
