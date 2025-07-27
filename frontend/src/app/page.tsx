@@ -23,7 +23,6 @@ export default function RootPage() {
       
       return () => clearTimeout(timer);
     } catch (error) {
-      console.error("Error in root page redirect:", error);
       setIsLoading(false);
       router.replace('/login');
     }

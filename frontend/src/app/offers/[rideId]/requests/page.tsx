@@ -32,7 +32,7 @@ export default function RideRequestsPage() {
           router.replace('/login');
           return;
         }
-        
+
         console.error("Error fetching ride requests:", err);
         if (err.response) {
           alert(err.response.data.message || "Failed to load ride requests.");
@@ -67,7 +67,7 @@ export default function RideRequestsPage() {
           router.replace('/login');
           return;
         }
-        
+
         console.error("Error responding to request:", err);
         if (err.response) {
           alert(err.response.data.message || "Failed to update request status.");
@@ -82,16 +82,10 @@ export default function RideRequestsPage() {
   };
 
   useEffect(() => {
-    try {
-      // Only fetch ride requests if authenticated and rideId exists
-      if (isAuthenticated && rideId) {
-        fetchRideRequests();
-      } else if (!token && rideId) {
-        // Only redirect if there's no token at all
-        router.replace('/login');
-      }
-    } catch (error) {
-      console.error("Error in useEffect:", error);
+    if (isAuthenticated && rideId) {
+      fetchRideRequests();
+    } else if (!token && rideId) {
+      router.replace('/login');
     }
   }, [rideId, token, filter, isAuthenticated]);
 
@@ -117,11 +111,10 @@ export default function RideRequestsPage() {
                 console.error("Error setting filter:", error);
               }
             }}
-            className={`px-4 py-1 text-sm rounded-full border transition-all ${
-              filter === opt.value
+            className={`px-4 py-1 text-sm rounded-full border transition-all ${filter === opt.value
                 ? "bg-blue-100 text-blue-900 border-blue-300"
                 : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-            }`}
+              }`}
           >
             {opt.label}
           </button>

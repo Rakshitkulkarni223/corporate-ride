@@ -30,45 +30,24 @@ export default function MyOffersPage() {
 
     const fetchOffers = async () => {
         try {
-            try {
-                const response = await axiosInstance.post(`/api/ride?status=${status}&mode=offerer`, { userId: user?.id });
-                setFilteredOffers(response.data.data || []);
-            } catch (err: any) {
-                // Check for authentication errors
-                if (err.response?.status === 401 || err.response?.status === 403) {
-                    console.log('Session expired, redirecting to login');
-                    logout();
-                    router.replace('/login');
-                    return;
-                }
-                
-                if (err.response) {
-                    console.log("Error response:", err.response.data);
-                    alert(err.response.data.message || "Something went wrong");
-                } else {
-                    console.log("Network or other error:", err.message);
-                    alert("Network error or server not reachable");
-                }
+            const response = await axiosInstance.post(`/api/ride?status=${status}&mode=offerer`, { userId: user?.id });
+            setFilteredOffers(response.data.data || []);
+        } catch (err: any) {
+            if (err.response) {
+                alert(err.response.data.message || "Something went wrong");
+            } else {
+                alert("Network error or server not reachable");
             }
-        } catch (error) {
-            console.error("Error handling the error:", error);
-            alert("An unexpected error occurred");
         } finally {
             setLoading(false);
         }
     };
-    
+
     useEffect(() => {
-        try {
-            // Only fetch offers if authenticated
-            if (isAuthenticated) {
-                fetchOffers();
-            } else if (!token) {
-                // Only redirect if there's no token at all
-                router.replace('/login');
-            }
-        } catch (error) {
-            console.error("Error in useEffect:", error);
+        if (isAuthenticated) {
+            fetchOffers();
+        } else if (!token) {
+            router.replace('/login');
         }
     }, [isAuthenticated, token, status]);
 
@@ -82,17 +61,8 @@ export default function MyOffersPage() {
                 });
                 alert("Ride scheduled!");
                 setShowModal(false);
-                // Refresh the offers list after creating a new ride
-                fetchOffers();
+                await fetchOffers();
             } catch (err: any) {
-                // Check for authentication errors
-                if (err.response?.status === 401 || err.response?.status === 403) {
-                    console.log('Session expired, redirecting to login');
-                    logout();
-                    router.replace('/login');
-                    return;
-                }
-                
                 if (err.response) {
                     console.log("Error response:", err.response.data);
                     alert(err.response.data.message || "Something went wrong");
@@ -102,7 +72,6 @@ export default function MyOffersPage() {
                 }
             }
         } catch (error) {
-            console.error("Error handling the error:", error);
             alert("An unexpected error occurred");
         }
     };
@@ -112,7 +81,6 @@ export default function MyOffersPage() {
         try {
             router.push(`/offers/${rideId}/requests`);
         } catch (error) {
-            console.error("Error navigating to requests page:", error);
             alert("Failed to navigate to requests. Please try again.");
         }
     };
@@ -163,14 +131,14 @@ export default function MyOffersPage() {
                                     {offer.pickupLocation} → {offer.dropLocation}
                                 </div>
                                 <span
-                                    className={`text-xs px-2 py-0.5 rounded-full capitalize ${offer.status === "active"
+                                    className={`text-xs px-2 py-0.5 rounded-full capitalize ${offer?.status === "Active"
                                         ? "bg-green-100 text-green-700"
-                                        : offer.status === "completed"
+                                        : offer?.status === "Completed"
                                             ? "bg-gray-200 text-gray-600"
                                             : "bg-yellow-100 text-yellow-700"
                                         }`}
                                 >
-                                    {offer.status}
+                                    {offer?.status}
                                 </span>
                             </div>
                             <div className="text-sm text-gray-600">

@@ -129,6 +129,34 @@ const updateRideOffer = async ({
   }
 };
 
+const updateExpiredRides = async () => {
+  try {
+    // Find rides that are still Active but their datetime has passed
+    const currentTime = new Date();
+    
+    // Find active rides with past datetime
+    const expiredRides = await RideOffer.find({
+      status: RIDE_OFFER_STATUS.ACTIVE,
+      rideDateTime: { $lt: currentTime }
+    });
+    
+    // Update each expired ride to Completed status
+    if (expiredRides.length > 0) {
+      const updatePromises = expiredRides.map(ride => {
+        return RideOffer.updateOne(
+          { _id: ride._id },
+          { $set: { status: RIDE_OFFER_STATUS.COMPLETED } }
+        );
+      });
+      
+      await Promise.all(updatePromises);
+      console.log(`Updated ${expiredRides.length} expired rides to Completed status`);
+    }
+  } catch (error) {
+    console.error("Error updating expired rides:", error);
+  }
+};
+
 
 const fetchRideOffers = async ({ filter }) => {
   try {
@@ -207,5 +235,6 @@ const fetchRideOffers = async ({ filter }) => {
 module.exports = {
   createRideOffer,
   fetchRideOffers,
-  updateRideOffer
+  updateRideOffer,
+  updateExpiredRides
 };

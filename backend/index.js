@@ -7,6 +7,7 @@ const authRouter = require("./src/router/auth");
 const rideRouter = require("./src/router/ride");
 const vehicleRouter = require("./src/router/vehicle");
 const imageRouter = require("./src/router/image");
+const { scheduleRideStatusUpdates } = require('./src/scheduler/rideStatusUpdater');
 
 const app = express();
 require("dotenv").config();
@@ -34,4 +35,16 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+
+// Start the server
+app.listen(PORT, () => {
+  try {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    
+    // Initialize the ride status update scheduler
+    console.log('Initializing background schedulers...');
+    scheduleRideStatusUpdates();
+  } catch (error) {
+    console.error('Error during server startup:', error);
+  }
+});
