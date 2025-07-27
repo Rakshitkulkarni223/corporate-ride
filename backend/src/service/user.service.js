@@ -216,6 +216,43 @@ const getUserDetails = async ({ userId, loggedInUserId }) => {
 
 }
 
+const deleteAvatarService = async ({ userId, loggedInUserId }) => {
+  checkUserAccess(userId, loggedInUserId)
+
+  const existingUser = await User.findById(userId);
+  if (!existingUser) {
+    throw {
+      status: 404,
+      message: "User not found.",
+    };
+  }
+
+  try {
+    const profileUpdates = {
+      ...(existingUser.profile?.avatar && { avatar: "" }),
+    };
+
+    const userUpdates = {
+      ...(Object.keys(profileUpdates).length && { profile: profileUpdates }),
+    };
+
+    await User.updateOne({ _id: userId }, { $set: userUpdates });
+
+    return {
+      status: 200,
+      message: "Avatar deleted successfully",
+      data: userUpdates,
+    };
+  } catch (err) {
+    console.error("Avatar delete failed. Cleaning up uploaded files...", err);
+
+    throw {
+      status: 500,
+      message: "Failed to delete avatar",
+    };
+  }
+};
+
 const getUserProfileDetails = async ({ userId, loggedInUserId }) => {
   checkUserAccess(userId, loggedInUserId);
 
@@ -249,14 +286,20 @@ const getUserProfileDetails = async ({ userId, loggedInUserId }) => {
       },
       vehicle: vehicle
         ? {
-            model: vehicle.model,
-            number: vehicle.number,
-            image: vehicle.image || null,
-          }
+          model: vehicle.model,
+          number: vehicle.number,
+          image: vehicle.image || null,
+        }
         : null,
     }
   };
 
 }
 
-module.exports = { saveUserDetails, updateUserDetails, getUserDetails, getUserProfileDetails, toggleOfferingStatusService, uploadDocumentsService, updateAvatarService };
+module.exports = {
+  saveUserDetails,
+  updateUserDetails,
+  getUserDetails, getUserProfileDetails,
+  toggleOfferingStatusService, uploadDocumentsService, updateAvatarService,
+  deleteAvatarService
+};

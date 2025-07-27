@@ -2,7 +2,7 @@ const express = require("express");
 
 const upload = require("../config/multer");
 const authenticateUser = require("../middleware/authMiddleware");
-const { registerUser, updateUserProfile, getUserById, updateAvatar, uploadDocuments, getUserProfileById, toggleOfferingStatus } = require("../controller/user.controller");
+const { registerUser, updateUserProfile, getUserById, updateAvatar, uploadDocuments, getUserProfileById, toggleOfferingStatus, deleteAvatar } = require("../controller/user.controller");
 
 const userRouter = express.Router();
 
@@ -21,6 +21,12 @@ userRouter.put(
     { name: "avatar", maxCount: 1 },
   ]),
   updateAvatar
+);
+
+userRouter.put(
+  "/delete-avatar/:id",
+  authenticateUser,
+  deleteAvatar
 );
 
 userRouter.put(

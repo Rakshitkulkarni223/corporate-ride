@@ -1,5 +1,5 @@
 const User = require("../model/User");
-const { saveUserDetails, updateUserDetails, getUserDetails,updateAvatarService, getUserProfileDetails, toggleOfferingStatusService, uploadDocumentsService } = require("../service/user.service");
+const { saveUserDetails, updateUserDetails, getUserDetails,updateAvatarService, getUserProfileDetails, toggleOfferingStatusService, uploadDocumentsService, deleteAvatarService } = require("../service/user.service");
 const handleResponse = require("../utils/handleResponse");
 
 const registerUser = async (req, res) => {
@@ -37,6 +37,15 @@ const uploadDocuments = async (req, res) => {
             message: "Internal server error while uploading documents"
         });
     }
+};
+
+const deleteAvatar = async (req, res) => {
+    await handleResponse(req, res, async () => {
+        const userId = req.params.id;
+        const loggedInUserId = req.userId;
+        
+        return await deleteAvatarService({ userId, loggedInUserId });
+    });
 };
 
 const updateAvatar = async (req, res) => {
@@ -97,5 +106,6 @@ module.exports = {
     getUserProfileById,
     toggleOfferingStatus,
     uploadDocuments,
-    updateAvatar
+    updateAvatar,
+    deleteAvatar
 };

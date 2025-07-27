@@ -330,6 +330,7 @@ export default function ProfilePage() {
                         }}
                         userId={authUser?.id}
                         token={token}
+                        image={user?.profile?.avatar}
                     />
                 )}
                 {showModal && (
