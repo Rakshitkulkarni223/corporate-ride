@@ -3,12 +3,14 @@ import { useState } from "react";
 export default function VehicleModal({
     onClose,
     onSave,
+    vehicle,
 }: {
     onClose: () => void;
     onSave: (data: any) => void;
+    vehicle?: any;
 }) {
-    const [model, setModel] = useState("");
-    const [number, setNumber] = useState("");
+    const [model, setModel] = useState(vehicle?.model || "");
+    const [number, setNumber] = useState(vehicle?.number || "");
     const [image, setImage] = useState<File | null>(null);
 
     const vehicleNumberRegex = /^[A-Z]{2}\d{2}[A-Z]{1,2}\d{4}$/;
@@ -21,20 +23,39 @@ export default function VehicleModal({
     };
 
     const handleSubmit = (e: any) => {
-        e.preventDefault();
-        if (!model || !number) {
-            alert("Model and number are required");
-            return;
+        try {
+            e.preventDefault();
+            if (!model || !number) {
+                alert("Model and number are required");
+                return;
+            }
+            if (!vehicleNumberRegex.test(number.trim().toUpperCase())) {
+                alert("Invalid vehicle registration number. Format: KA01AB1234");
+                return;
+            }
+            
+            // Only require image for new vehicle creation, not for updates
+            if (!vehicle && !image) {
+                alert("Image is required for new vehicles");
+                return;
+            }
+            
+            // Create data object with model and number
+            const data: { model: string; number: string; image?: File } = {
+                model: model.trim(),
+                number: number.trim().toUpperCase(),
+            };
+            
+            // Only add image to data if a new one is selected
+            if (image) {
+                data.image = image;
+            }
+            
+            onSave(data);
+        } catch (error) {
+            console.error("Error in handleSubmit:", error);
+            alert("An error occurred while submitting the form");
         }
-        if (!vehicleNumberRegex.test(number.trim().toUpperCase())) {
-            alert("Invalid vehicle registration number. Format: KA01AB1234");
-            return;
-        }
-        if (!image) {
-            alert("Image is required");
-            return;
-        }
-        onSave({ model, number, image });
     };
 
     return (

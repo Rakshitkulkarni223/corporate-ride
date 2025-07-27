@@ -18,6 +18,7 @@ export default function ProfilePage() {
     const [showEditProfileModal, setShowEditProfileModal] = useState(false);
     const [isVehicleExisst, setIsVehicleExisst] = useState(false);
     const [vehicle, setVehicle] = useState<any>(null);
+    const [isVehicleEdit, setIsVehicleEdit] = useState(false);
 
     const [isOfferingRides, setIsOfferingRides] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -60,7 +61,7 @@ export default function ProfilePage() {
     const saveProfileChanges = async () => {
         try {
             setIsSaving(true);
-            
+
             try {
                 // Prepare profile update data
                 const updateData = {
@@ -71,15 +72,15 @@ export default function ProfilePage() {
                         officeAddress: profileFields.officeAddress
                     }
                 };
-                
+
                 // Call API to update profile
                 await axiosInstance.put(`/api/user/update/${authUser?.id}`, updateData, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                
+
                 // Refresh user data
                 await fetchUserProfile();
-                
+
                 // Exit edit mode
                 setIsEditing(false);
             } catch (err: any) {
@@ -93,7 +94,7 @@ export default function ProfilePage() {
             setIsSaving(false);
         }
     };
-    
+
     const fetchUserProfile = async () => {
         try {
             try {
@@ -191,7 +192,6 @@ export default function ProfilePage() {
 
     const handleToggleRideOffer = async () => {
         try {
-            debugger
             const newValue = !user.isOfferingRides;
             try {
                 const response = await axiosInstance.put(
@@ -222,10 +222,20 @@ export default function ProfilePage() {
     const handleSaveVehicle = async (data: any) => {
         try {
             try {
-                const response = await axiosInstance.post("/api/vehicle/create", data, {
-                    headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
-                });
-                await handleToggleRideOffer();
+                debugger
+                if(isVehicleEdit){
+                    const response = await axiosInstance.post(`/api/vehicle/update/${vehicle._id}`, {
+                        model: data.model,
+                        number: data.number,
+                    }, {
+                        headers: { Authorization: `Bearer ${token}`},
+                    });
+                }else{
+                    const response = await axiosInstance.post("/api/vehicle/create", data, {
+                        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
+                    });
+                    await handleToggleRideOffer();
+                }
                 await fetchVehicleDetails(true);
                 setShowModal(false);
             } catch (err: any) {
@@ -349,7 +359,7 @@ export default function ProfilePage() {
                             </div>
                         )}
                     </div>
-                    
+
                     {!isEditing ? (
                         // View mode
                         <>
@@ -371,9 +381,9 @@ export default function ProfilePage() {
                         <div className="space-y-3 py-1">
                             <div>
                                 <label className="block text-xs text-gray-500 mb-1">Age</label>
-                                <input 
-                                    type="number" 
-                                    value={profileFields.age} 
+                                <input
+                                    type="number"
+                                    value={profileFields.age}
                                     onChange={(e) => {
                                         try {
                                             handleInputChange('age', e.target.value);
@@ -387,8 +397,8 @@ export default function ProfilePage() {
                             </div>
                             <div>
                                 <label className="block text-xs text-gray-500 mb-1">Gender</label>
-                                <select 
-                                    value={profileFields.gender} 
+                                <select
+                                    value={profileFields.gender}
                                     onChange={(e) => {
                                         try {
                                             handleInputChange('gender', e.target.value);
@@ -407,9 +417,9 @@ export default function ProfilePage() {
                             </div>
                             <div>
                                 <label className="block text-xs text-gray-500 mb-1">Home Address</label>
-                                <input 
-                                    type="text" 
-                                    value={profileFields.homeAddress} 
+                                <input
+                                    type="text"
+                                    value={profileFields.homeAddress}
                                     onChange={(e) => {
                                         try {
                                             handleInputChange('homeAddress', e.target.value);
@@ -423,9 +433,9 @@ export default function ProfilePage() {
                             </div>
                             <div>
                                 <label className="block text-xs text-gray-500 mb-1">Office Address</label>
-                                <input 
-                                    type="text" 
-                                    value={profileFields.officeAddress} 
+                                <input
+                                    type="text"
+                                    value={profileFields.officeAddress}
                                     onChange={(e) => {
                                         try {
                                             handleInputChange('officeAddress', e.target.value);
@@ -446,7 +456,10 @@ export default function ProfilePage() {
                         <div className="flex justify-between items-center">
                             <div className="font-medium text-base">Vehicle Details</div>
                             <button
-                                onClick={() => alert("Open edit modal for personal details")}
+                                onClick={() => {
+                                    setIsVehicleEdit(true);
+                                    setShowModal(true);
+                                }}
                                 className="text-gray-500 hover:text-blue-600 transition"
                                 title="Edit"
                             >
@@ -536,6 +549,7 @@ export default function ProfilePage() {
                             setShowModal(false);
                         }}
                         onSave={handleSaveVehicle}
+                        vehicle={vehicle}
                     />
                 )}
             </>

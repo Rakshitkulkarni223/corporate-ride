@@ -16,6 +16,7 @@ const getMyVehicle = async (req, res) => {
 
 const updateVehicle = async (req, res) => {
     await handleResponse(req, res, async () => {
+        console.log(req.body)
         return await vehicleService.updateVehicle(req.params.id, req.userId, req.body);
     })
 };
