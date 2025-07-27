@@ -5,6 +5,7 @@ import React, {
   useReducer,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   ReactNode,
 } from "react";
@@ -45,33 +46,93 @@ const initialState: AuthState = {
 
 
 
+// Helper functions for localStorage
+const saveAuthToLocalStorage = (authData: any) => {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('auth', JSON.stringify(authData));
+    }
+  } catch (error) {
+    console.error('Error saving to localStorage:', error);
+  }
+};
+
+const getAuthFromLocalStorage = () => {
+  try {
+    if (typeof window !== 'undefined') {
+      const authData = localStorage.getItem('auth');
+      return authData ? JSON.parse(authData) : null;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting from localStorage:', error);
+    return null;
+  }
+};
+
+const clearAuthFromLocalStorage = () => {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth');
+    }
+  } catch (error) {
+    console.error('Error clearing localStorage:', error);
+  }
+};
+
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
-  switch (action.type) {
-    case "login":
-      return {
-        user: action.payload.user,
-        token: action.payload.token,
-        expires: action.payload.expires,
-        isAuthenticated: true,
-        status: CONSTANTS.AUTH_STATUS.SUCCESS,
-      };
-    case "logout":
-      return {
-        ...initialState,
-        status: CONSTANTS.AUTH_STATUS.IDLE,
-      };
-    case "status":
-      return {
-        ...state,
-        status: action.payload.status,
-      };
-    case "updateUser":
-      return {
-        ...state,
-        user: { ...state.user, ...action.payload },
-      };
-    default:
-      return state;
+  try {
+    switch (action.type) {
+      case "login": {
+        const newState = {
+          user: action.payload.user,
+          token: action.payload.token,
+          expires: action.payload.expires,
+          isAuthenticated: true,
+          status: CONSTANTS.AUTH_STATUS.SUCCESS,
+        };
+        // Save to localStorage
+        saveAuthToLocalStorage({
+          user: action.payload.user,
+          token: action.payload.token,
+          expires: action.payload.expires
+        });
+        return newState;
+      }
+      case "logout": {
+        // Clear from localStorage
+        clearAuthFromLocalStorage();
+        return {
+          ...initialState,
+          status: CONSTANTS.AUTH_STATUS.IDLE,
+        };
+      }
+      case "status":
+        return {
+          ...state,
+          status: action.payload.status,
+        };
+      case "updateUser": {
+        const updatedUser = { ...state.user, ...action.payload };
+        // If we have an authenticated user, update localStorage
+        if (state.isAuthenticated) {
+          saveAuthToLocalStorage({
+            user: updatedUser,
+            token: state.token,
+            expires: state.expires
+          });
+        }
+        return {
+          ...state,
+          user: updatedUser,
+        };
+      }
+      default:
+        return state;
+    }
+  } catch (error) {
+    console.error('Error in auth reducer:', error);
+    return state;
   }
 };
 
@@ -82,22 +143,95 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [state, dispatch] = useReducer(authReducer, initialState);
+  // Get initial state from localStorage if available
+  const getInitialState = (): AuthState => {
+    try {
+      const savedAuth = getAuthFromLocalStorage();
+      if (savedAuth?.token) {
+        return {
+          user: savedAuth.user || null,
+          token: savedAuth.token,
+          expires: savedAuth.expires || '',
+          isAuthenticated: true,
+          status: CONSTANTS.AUTH_STATUS.SUCCESS,
+        };
+      }
+    } catch (error) {
+      console.error('Error getting initial state:', error);
+    }
+    return initialState;
+  };
+
+  const [state, dispatch] = useReducer(authReducer, getInitialState());
+
+  // Check authentication on initial load
+  useEffect(() => {
+    try {
+      // Verify auth state is consistent
+      const savedAuth = getAuthFromLocalStorage();
+      
+      // If we have a token in localStorage but not in state, restore it
+      if (savedAuth?.token && !state.token) {
+        try {
+          dispatch({
+            type: "login",
+            payload: {
+              user: savedAuth.user || null,
+              token: savedAuth.token,
+              expires: savedAuth.expires || ''
+            }
+          });
+        } catch (restoreError) {
+          console.error('Error restoring auth state:', restoreError);
+        }
+      } 
+      // If we have a token in state but not in localStorage, save it
+      else if (state.token && !savedAuth?.token) {
+        try {
+          saveAuthToLocalStorage({
+            user: state.user,
+            token: state.token,
+            expires: state.expires
+          });
+        } catch (saveError) {
+          console.error('Error saving auth state:', saveError);
+        }
+      }
+    } catch (error) {
+      console.error('Error in auth effect:', error);
+    }
+  }, []);
 
   const login = useCallback((user: User, token: string, expires: string) => {
-    dispatch({ type: "login", payload: { user, token, expires } });
+    try {
+      dispatch({ type: "login", payload: { user, token, expires } });
+    } catch (error) {
+      console.error('Error in login:', error);
+    }
   }, []);
 
   const logout = useCallback(() => {
-    dispatch({ type: "logout" });
+    try {
+      dispatch({ type: "logout" });
+    } catch (error) {
+      console.error('Error in logout:', error);
+    }
   }, []);
 
   const setAuthStatus = useCallback((status: string) => {
-    dispatch({ type: "status", payload: { status } });
+    try {
+      dispatch({ type: "status", payload: { status } });
+    } catch (error) {
+      console.error('Error setting auth status:', error);
+    }
   }, []);
 
   const updateUser = useCallback((updates: Partial<User>) => {
-    dispatch({ type: "updateUser", payload: updates });
+    try {
+      dispatch({ type: "updateUser", payload: updates });
+    } catch (error) {
+      console.error('Error updating user:', error);
+    }
   }, []);
 
   const value = useMemo(

@@ -30,6 +30,10 @@ export default function VehicleModal({
             alert("Invalid vehicle registration number. Format: KA01AB1234");
             return;
         }
+        if (!image) {
+            alert("Image is required");
+            return;
+        }
         onSave({ model, number, image });
     };
 
@@ -61,6 +65,7 @@ export default function VehicleModal({
                     <div>
                         <label className="text-sm font-medium block mb-1">Upload Image</label>
                         <input
+                            required
                             type="file"
                             accept="image/*"
                             className="block w-full text-sm text-gray-700 file:mr-4 file:py-1.5 file:px-4 

@@ -26,7 +26,7 @@ interface RideOffer {
 
 export default function RideOffersPage() {
     const router = useRouter();
-    const { user, token, isAuthenticated } = useAuth();
+    const { user, token, isAuthenticated, logout } = useAuth();
     const [rides, setRides] = useState<RideOffer[]>([]);
     const [loading, setLoading] = useState(true);
     const [requesting, setRequesting] = useState<string | null>(null);
@@ -35,25 +35,61 @@ export default function RideOffersPage() {
     const fetchRides = async () => {
         try {
             const response = await axiosInstance.post(`/api/ride?status=${RIDE_OFFER_STATUS.ACTIVE}&mode=requester`, { userId: user?.id });
-            const allRides = response.data.data;
-            const rideIds = response.data?.data?.map((req: any) => req._id) || [];
-            setSentRequests(rideIds);
-            console.log(allRides)
-            const visibleRides = allRides.filter((ride: RideOffer) => {
-                const userRequest = ride.requests?.[0];
-                return !userRequest || userRequest.status !== "Accepted";
-            });
+            const allRides = response.data.data || [];
 
-            setRides(visibleRides);
+            // Only fetch user requests if we have a token
+            let userRequests = [];
+            let requestedRideIds = new Set();
 
-            const sent = visibleRides
-                .filter((ride: RideOffer) => ride.requests?.[0]?.status === "Sent")
-                .map((ride: RideOffer) => ride._id);
-            setSentRequests(sent);
+            if (token) {
+                try {
+                    // Get user's requests to filter out rides
+                    const requestsResponse = await axiosInstance.post('/api/ride/requests',
+                        { userId: user?.id },
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
 
-            setLoading(false);
-            setLoading(false);
+                    userRequests = requestsResponse.data.data || [];
+                    requestedRideIds = new Set(userRequests.map((req: any) =>
+                        req.rideOffer._id || req.rideOffer
+                    ));
+                } catch (requestError) {
+                    console.error('Error fetching ride requests:', requestError);
+                    // Continue with empty requests list
+                }
+            } else {
+                console.warn('Token is undefined, skipping authenticated requests');
+            }
+
+            // Filter rides that the user hasn't requested
+            const availableRides = allRides.filter((ride: RideOffer) =>
+                !requestedRideIds.has(ride._id)
+            );
+
+            setRides(availableRides);
+
+            // Update sent requests state
+            if (userRequests.length > 0) {
+                try {
+                    const sentRequestIds = userRequests
+                        .filter((req: any) => req.status === 'Sent')
+                        .map((req: any) => req.rideOffer._id || req.rideOffer);
+
+                    setSentRequests(sentRequestIds);
+                } catch (error) {
+                    console.error('Error processing sent requests:', error);
+                    setSentRequests([]);
+                }
+            }
         } catch (err: any) {
+            // Check for authentication errors
+            if (err.response?.status === 401 || err.response?.status === 403) {
+                console.log('Session expired, redirecting to login');
+                logout();
+                router.replace('/login');
+                return;
+            }
+
             if (err.response) {
                 console.log("Error response:", err.response.data);
                 alert(err.response.data.message || "Something went wrong");
@@ -62,39 +98,74 @@ export default function RideOffersPage() {
                 alert("Network error or server not reachable");
             }
         }
+        finally {
+            setLoading(false);
+        }
     };
 
     const sendRequest = async (rideId: string) => {
         try {
             setRequesting(rideId);
-            const response = await axiosInstance.post("/api/ride/request/send", {
-                rideId,
-                userId: user?.id,
-                message: "I'd like to join this ride.",
-            }, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setSentRequests((prev) => [...prev, rideId]);
-            setRequesting(null);
-        } catch (err: any) {
-            setRequesting(null);
-            if (err.response) {
-                console.log("Error response:", err.response.data);
-                alert(err.response.data.message || "Something went wrong, Failed to send request.");
-            } else {
-                console.log("Network or other error:", err.message);
-                alert("Network error or server not reachable");
+
+            // Check if token exists before making authenticated request
+            if (!token) {
+                console.error('Cannot send request: No authentication token');
+                alert('Please log in to send ride requests');
+                router.replace('/login');
+                return;
             }
+
+            try {
+                const response = await axiosInstance.post("/api/ride/request/send", {
+                    rideId,
+                    userId: user?.id,
+                    message: "I'd like to join this ride.",
+                }, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+
+                // Add to sent requests
+                setSentRequests((prev) => [...prev, rideId]);
+
+                // Remove from available rides list
+                setRides((prevRides) => prevRides.filter(ride => ride._id !== rideId));
+            } catch (err: any) {
+                // Check for authentication errors
+                if (err.response?.status === 401 || err.response?.status === 403) {
+                    console.log('Session expired, redirecting to login');
+                    logout();
+                    router.replace('/login');
+                    return;
+                }
+
+                if (err.response) {
+                    console.log("Error response:", err.response.data);
+                    alert(err.response.data.message || "Something went wrong, Failed to send request.");
+                } else {
+                    console.log("Network or other error:", err.message);
+                    alert("Network error or server not reachable");
+                }
+            }
+        } catch (error) {
+            console.error("Error handling the error:", error);
+            alert("An unexpected error occurred");
+        } finally {
+            setRequesting(null);
         }
     };
 
     useEffect(() => {
         if (isAuthenticated) {
             fetchRides();
-        }else{
+        } else if (token) {
+            const timer = setTimeout(() => {
+                fetchRides();
+            }, 300);
+            return () => clearTimeout(timer);
+        } else {
             router.replace('/login');
         }
-    }, [token]);
+    }, [isAuthenticated, token]);
 
     if (loading) return <p className="text-center mt-10 text-gray-500">Loading rides...</p>;
 
@@ -135,14 +206,28 @@ export default function RideOffersPage() {
                             </div>
                             <div className="text-sm text-gray-600">
                                 <span className="font-medium">Time:</span>{" "}
-                                {new Date(ride.rideDateTime).toLocaleString()}
+                                {(() => {
+                                    try {
+                                        return new Date(ride.rideDateTime).toLocaleString();
+                                    } catch (error) {
+                                        console.error("Error formatting date:", error);
+                                        return "Invalid date";
+                                    }
+                                })()}
                             </div>
                             <div className="text-sm text-gray-600">
                                 <span className="font-medium">Seats:</span> {ride.availableSeats}
                             </div>
 
                             <button
-                                onClick={() => sendRequest(ride._id)}
+                                onClick={() => {
+                                    try {
+                                        sendRequest(ride._id);
+                                    } catch (error) {
+                                        console.error("Error sending request:", error);
+                                        alert("Failed to send request. Please try again.");
+                                    }
+                                }}
                                 className={`mt-2 w-full py-1.5 rounded-md text-sm transition cursor-pointer 
     ${requesting === ride._id || sentRequests.includes(ride._id)
                                         ? "bg-gray-400 text-white cursor-not-allowed"

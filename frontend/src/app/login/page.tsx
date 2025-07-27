@@ -23,18 +23,57 @@ export default function LoginPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const response = await axiosInstance.post("/api/auth/login", form);
-            const { token, expires, ...user } = response.data.data;
-            login(user, user.token, user.expires);
-            setAuthStatus(CONSTANTS.AUTH_STATUS.SUCCESS);
-            router.replace('/home');
-        } catch (err: any) {
-            if (err.response) {
-                console.log("Error response:", err.response.data);
-                alert(err.response.data.message || "Something went wrong");
-            } else {
-                console.log("Network or other error:", err.message);
-                alert("Network error or server not reachable");
+            // Set pending state first
+            setAuthStatus(CONSTANTS.AUTH_STATUS.PENDING);
+            
+            try {
+                // Login API call
+                const response = await axiosInstance.post("/api/auth/login", form);
+                
+                try {
+                    // Extract data from response
+                    const { token, expires, ...user } = response.data.data;
+                    
+                    // Update auth context
+                    login(user, token, expires);
+                    setAuthStatus(CONSTANTS.AUTH_STATUS.SUCCESS);
+                    
+                    // Navigate after successful login with a small delay
+                    // to ensure state updates are complete
+                    setTimeout(() => {
+                        try {
+                            router.replace('/home');
+                        } catch (navError) {
+                            console.error("Navigation error:", navError);
+                        }
+                    }, 100);
+                } catch (dataError) {
+                    console.error("Error processing login data:", dataError);
+                    alert("Error processing login data. Please try again.");
+                    setAuthStatus(CONSTANTS.AUTH_STATUS.FAIL);
+                }
+            } catch (err: any) {
+                // API error handling
+                try {
+                    if (err.response) {
+                        console.log("Error response:", err.response.data);
+                        alert(err.response.data.message || "Invalid credentials or server error");
+                    } else {
+                        console.log("Network or other error:", err.message);
+                        alert("Network error or server not reachable");
+                    }
+                    setAuthStatus(CONSTANTS.AUTH_STATUS.FAIL);
+                } catch (alertError) {
+                    console.error("Error displaying alert:", alertError);
+                }
+            }
+        } catch (outerError) {
+            console.error("Unexpected error in form submission:", outerError);
+            try {
+                alert("An unexpected error occurred");
+                setAuthStatus(CONSTANTS.AUTH_STATUS.FAIL);
+            } catch (finalError) {
+                console.error("Error in final error handler:", finalError);
             }
         }
     };

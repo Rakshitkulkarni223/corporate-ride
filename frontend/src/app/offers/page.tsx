@@ -20,7 +20,7 @@ interface RideOfferDetails {
 export default function MyOffersPage() {
     const router = useRouter();
 
-    const { token, user, isAuthenticated } = useAuth();
+    const { token, user, isAuthenticated, logout } = useAuth();
 
     const [filteredOffers, setFilteredOffers] = useState<RideOfferDetails[]>([]);
     const [status, setStatus] = useState("Active");
@@ -28,13 +28,20 @@ export default function MyOffersPage() {
 
     const [showModal, setShowModal] = useState(false);
 
-    useEffect(() => {
-        const fetchOffers = async () => {
+    const fetchOffers = async () => {
+        try {
             try {
                 const response = await axiosInstance.post(`/api/ride?status=${status}&mode=offerer`, { userId: user?.id });
-                console.log(response.data)
                 setFilteredOffers(response.data.data || []);
             } catch (err: any) {
+                // Check for authentication errors
+                if (err.response?.status === 401 || err.response?.status === 403) {
+                    console.log('Session expired, redirecting to login');
+                    logout();
+                    router.replace('/login');
+                    return;
+                }
+                
                 if (err.response) {
                     console.log("Error response:", err.response.data);
                     alert(err.response.data.message || "Something went wrong");
@@ -42,12 +49,26 @@ export default function MyOffersPage() {
                     console.log("Network or other error:", err.message);
                     alert("Network error or server not reachable");
                 }
-            } finally {
-                setLoading(false);
             }
-        };
-        if (isAuthenticated) {
-            fetchOffers();
+        } catch (error) {
+            console.error("Error handling the error:", error);
+            alert("An unexpected error occurred");
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    useEffect(() => {
+        try {
+            // Only fetch offers if authenticated
+            if (isAuthenticated) {
+                fetchOffers();
+            } else if (!token) {
+                // Only redirect if there's no token at all
+                router.replace('/login');
+            }
+        } catch (error) {
+            console.error("Error in useEffect:", error);
         }
     }, [isAuthenticated, token, status]);
 
@@ -55,25 +76,45 @@ export default function MyOffersPage() {
 
     const handleSubmitRide = async (formData: any) => {
         try {
-            await axiosInstance.post("/api/ride/create", { ...formData, vehicleId: user?.vehicleId }, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            alert("Ride scheduled!");
-            setShowModal(false);
-        } catch (err: any) {
-            if (err.response) {
-                console.log("Error response:", err.response.data);
-                alert(err.response.data.message || "Something went wrong");
-            } else {
-                console.log("Network or other error:", err.message);
-                alert("Network error or server not reachable");
+            try {
+                await axiosInstance.post("/api/ride/create", { ...formData, vehicleId: user?.vehicleId }, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                alert("Ride scheduled!");
+                setShowModal(false);
+                // Refresh the offers list after creating a new ride
+                fetchOffers();
+            } catch (err: any) {
+                // Check for authentication errors
+                if (err.response?.status === 401 || err.response?.status === 403) {
+                    console.log('Session expired, redirecting to login');
+                    logout();
+                    router.replace('/login');
+                    return;
+                }
+                
+                if (err.response) {
+                    console.log("Error response:", err.response.data);
+                    alert(err.response.data.message || "Something went wrong");
+                } else {
+                    console.log("Network or other error:", err.message);
+                    alert("Network error or server not reachable");
+                }
             }
+        } catch (error) {
+            console.error("Error handling the error:", error);
+            alert("An unexpected error occurred");
         }
     };
 
 
     const handleCardClick = (rideId: string) => {
-        router.push(`/offers/${rideId}/requests`);
+        try {
+            router.push(`/offers/${rideId}/requests`);
+        } catch (error) {
+            console.error("Error navigating to requests page:", error);
+            alert("Failed to navigate to requests. Please try again.");
+        }
     };
 
 
@@ -133,7 +174,14 @@ export default function MyOffersPage() {
                                 </span>
                             </div>
                             <div className="text-sm text-gray-600">
-                                {new Date(offer.rideDateTime).toLocaleString()}
+                                {(() => {
+                                    try {
+                                        return new Date(offer.rideDateTime).toLocaleString();
+                                    } catch (error) {
+                                        console.error("Error formatting date:", error);
+                                        return "Invalid date";
+                                    }
+                                })()}
                             </div>
                             <div className="text-sm text-gray-500">Seats: {offer.availableSeats}</div>
                         </div>
